@@ -14,7 +14,11 @@ open Ast
 %token ADD SUB
 %token MUL DIV
 %token ARROW
-
+%token ONLYMETA
+%token META
+%token INTRINSIC
+%token OVERRIDE
+%token CLASS
 %left ADD SUB
 %left MUL DIV
 
@@ -52,24 +56,24 @@ exp:
 
 
 /*
-            template<typename L>
-            auto make_keyword( L&& literal )
-            {
-                return x3::lexeme[
-                    x3::lit( std::forward<L>( literal ) )
-                    >> !( range( 'A', 'Z' )
-                        | range( 'a', 'z' )
-                        | x3::char_( '_' )
-                        | range( '0', '9' )
-                        )
-                    ];
-            }
+template<typename L>
+auto make_keyword( L&& literal )
+{
+    return x3::lexeme[
+        x3::lit( std::forward<L>( literal ) )
+        >> !( range( 'A', 'Z' )
+            | range( 'a', 'z' )
+            | x3::char_( '_' )
+            | range( '0', '9' )
+            )
+        ];
+}
 
-            template<typename L>
-            decltype(auto) tagged( L&& rule )
-            {
-                return x3::raw[std::forward<L>( rule )][helper::tagging()];
-            }
+template<typename L>
+decltype(auto) tagged( L&& rule )
+{
+    return x3::raw[std::forward<L>( rule )][helper::tagging()];
+}
 */
             /* code grammar */
 
@@ -97,7 +101,7 @@ function_definition_statement:
         decl_attribute_list
         -type_specifier
         function_body_block
-        { Function_definition_statement($2, $1, $3, $4, $5, $6) }
+        { Function_definition_statement($3, $2, $4, $5, $6, $7) }
 
 function_body_statements_list:
     | LBRACE program_body_statements_list RBRACE { $2 }
@@ -162,96 +166,77 @@ parameter_variable_declaration_list:
  */
 value_initializer_unit:
     | value_initializer_unit_only_value { assign }
-    | ( type_specifier -(ASSIGN expression)
+    | type_specifier -(ASSIGN expression)
         {
             ($1, $2)
         }
 
 value_initializer_unit_only_value:
     | ASSIGN expression
-        {
-            $2
-        }
+        { $2 }
 
 /* ==================================================================================================== */
 type_specifier:
     | COLON id_expression { $2 }
 
 decl_attribute:
-    | x3::lit( "onlymeta" )[helper::assign( attribute::decl::k_onlymeta )]
-    | x3::lit( "meta" )[helper::assign( attribute::decl::k_meta )]
-    | x3::lit( "intrinsic" )[helper::assign( attribute::decl::k_intrinsic )]
-    | x3::lit( "override" )[helper::assign( attribute::decl::k_override )]
+    | ONLYMETA { AOnlymeta }
+    | META { AMeta }
+    | INTRINSIC { AIntrinsic }
+    | OVERRIDE { AOverride }
 
-R( decl_attribute_list, attribute::decl::type,
-    x3::attr( attribute::decl::k_default )
+decl_attribute_list:
+    x3::attr( ADefault )
     >> ( ( t.decl_attribute[helper::make_merged_bitflag( ph::_1 )] % x3::lit( ',' ) )
        | x3::eps
        )
-)
 
-// ====================================================================================================
-// ====================================================================================================
-RN( class_definition_statement, ast::statement_ptr,
-    ( make_keyword( "class" )
-    > t.identifier_relative
-    > -t.template_parameter_variable_declaration_list
-    > -t.base_class_type
-    > -t.mixin_traits_list
-    > t.decl_attribute_list
-    > t.class_body_block
-    )[
-        helper::make_templatable_node_ptr<ast::class_definition_statement>(
-            ph::_2,
-            ph::_1,
-            ph::_3,
-            ph::_4,
-            ph::_5,
-            ph::_6
-            )
-        ]
-)
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+class_definition_statement:
+  | CLASS
+    identifier_relative
+    -template_parameter_variable_declaration_list
+    -base_class_type
+    -mixin_traits_list
+    decl_attribute_list
+    class_body_block
+    {
+        helper::make_templatable_node_ptr<ast::class_definition_statement>($3, $2, $4, $5, $6, $7)
+    }
 
-R( base_class_type, ast::id_expression_ptr,
-    ( x3::lit( '<' ) >> t.id_expression )
-)
+base_class_type:
+  | LT id_expression { $2 }
 
-R( mixin_traits_list, ast::id_expression_list,
-    ( x3::lit( '[' ) >> ( t.id_expression % ',' ) >> x3::lit( ']' ) )
-)
+mixin_traits_list:
+  | LBRACK  ( t.id_expression % ',' ) RBRACK { $2 }
 
-R( class_body_block, ast::statements_ptr,
-    x3::lit( "{" ) >> t.class_body_statements >> x3::lit( "}" )
-)
+class_body_block:
+  | LBRACE class_body_statements RBRACE { $2 }
 
 
-// ====================================================================================================
-//
-R( class_body_statement, ast::statement_ptr,
-    ( t.class_virtual_function_definition_statement
-    | t.class_function_definition_statement
-    | t.class_variable_declaration_statement
-    | t.empty_statement
-    )
-)
+/* ==================================================================================================== */
 
-RN( class_body_statements, ast::statements_ptr,
-    ( *t.class_body_statement )[
-        helper::make_node_ptr<ast::statements>( ph::_1 )
-        ]
-)
+class_body_statement:
+  | class_virtual_function_definition_statement { $1 }
+  | class_function_definition_statement { $1 }
+  | class_variable_declaration_statement { $1 }
+  | empty_statement { $1 }
+
+class_body_statements:
+  | *class_body_statement { $1 }
 
 
-RN( class_function_definition_statement, ast::statement_ptr,
-    ( make_keyword( "def" )
-    > t.identifier_relative
-    > -t.template_parameter_variable_declaration_list
-    > t.parameter_variable_declaration_list
-    > t.decl_attribute_list
-    > -t.class_variable_initializers
-    > -t.type_specifier
-    > t.function_body_block
-    )[
+class_function_definition_statement:
+  | DEF
+    identifier_relative
+    -template_parameter_variable_declaration_list
+    parameter_variable_declaration_list
+    decl_attribute_list
+    -class_variable_initializers
+    -type_specifier
+    function_body_block
+    {
         helper::make_templatable_node_ptr<ast::class_function_definition_statement>(
             ph::_2,
             ph::_1,
@@ -261,11 +246,10 @@ RN( class_function_definition_statement, ast::statement_ptr,
             ph::_6,
             ph::_7
             )
-        ]
-)
+    }
 
-RN( class_virtual_function_definition_statement, ast::class_virtual_function_definition_statement_ptr,
-    ( make_keyword( "virtual" ) > make_keyword( "def" )
+class_virtual_function_definition_statement:
+  | ( make_keyword( "virtual" ) > make_keyword( "def" )
     > ( ( t.identifier_relative
         >> t.parameter_variable_declaration_list
         >> t.decl_attribute_list
@@ -307,10 +291,10 @@ RN( class_virtual_function_definition_statement, ast::class_virtual_function_def
             ]
       )
     )
-)
 
-R( class_variable_initializers, ast::element::class_variable_initializers,
-    ( x3::lit( "|" )
+
+class_variable_initializers:
+  | ( x3::lit( "|" )
     > x3::attr(nullptr) /* work around to avoid this rule to be adapted to vector(pass type at random) */
     > t.class_variable_initializer_list
     )[
@@ -318,47 +302,45 @@ R( class_variable_initializers, ast::element::class_variable_initializers,
             ph::_2
             )
         ]
-)
-
-R( class_variable_initializer_list, ast::variable_declaration_unit_container_t,
-    t.class_variable_initializer_unit % x3::lit( ',' )
-)
-
-R( class_variable_initializer_unit, ast::variable_declaration_unit,
-    ( t.identifier_relative > t.value_initializer_unit_only_value )[
-        helper::construct<ast::variable_declaration_unit>( ph::_1, attribute::decl::k_default, ph::_2 )
-        ]
-)
 
 
-RN( class_variable_declaration_statement, ast::class_variable_declaration_statement_ptr,
-    ( t.variable_declaration > t.statement_termination )[
+class_variable_initializer_list:
+  | class_variable_initializer_unit % x3::lit( ',' )
+
+
+class_variable_initializer_unit:
+  | identifier_relative value_initializer_unit_only_value {
+        helper::construct<ast::variable_declaration_unit>( ph::_1, ADefault, ph::_2 )
+  }
+
+
+
+class_variable_declaration_statement:
+  | variable_declaration statement_termination {
         helper::make_node_ptr<ast::class_variable_declaration_statement>( ph::_1 )
-        ]
-)
+        }
 
 
-// ====================================================================================================
-// ====================================================================================================
-//
-R( extern_statement, ast::statement_ptr,
-    ( make_keyword( "extern" )
-    > ( t.extern_function_declaration_statement
-      | t.extern_class_declaration_statement
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
+extern_statement:
+  | EXTERN
+    > ( extern_function_declaration_statement
+      | extern_class_declaration_statement
       )
-    > t.statement_termination
-    )
-)
+    > statement_termination
+    
 
-RN( extern_function_declaration_statement, ast::statement_ptr,
-    ( make_keyword( "def" )
+extern_function_declaration_statement:
+  | DEF
     > t.identifier_relative
     > -t.template_parameter_variable_declaration_list
     > t.parameter_variable_declaration_list
     > t.extern_decl_attribute_list
     > t.type_specifier
     > t.string_literal_sequence
-    )[
+    {
         helper::make_templatable_node_ptr<ast::extern_function_declaration_statement>(
             ph::_2,
             ph::_1,
@@ -367,33 +349,32 @@ RN( extern_function_declaration_statement, ast::statement_ptr,
             ph::_5,
             ph::_6
             )
-        ]
-)
+    }
 
-RN( extern_class_declaration_statement, ast::statement_ptr,
-    ( make_keyword( "class" )
+extern_class_declaration_statement:
+  | CLASS
     > t.identifier_relative
     > -t.template_parameter_variable_declaration_list
     > t.extern_decl_attribute_list
     > t.string_literal_sequence
-    )[
+    {
         helper::make_templatable_node_ptr<ast::extern_class_declaration_statement>(
             ph::_2,
             ph::_1,
             ph::_3,
             ph::_4
             )
-        ]
-)
-
-R( extern_decl_attribute_list, attribute::decl::type,
-   t.decl_attribute_list[helper::assign()] >> x3::eps[helper::make_merged_bitflag( attribute::decl::k_extern )]
-)
+    }
 
 
-// ====================================================================================================
-// ====================================================================================================
-//
+extern_decl_attribute_list:
+  | t.decl_attribute_list[helper::assign()] >> x3::eps{helper::make_merged_bitflag( Aextern )}
+
+
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+
 R( template_parameter_variable_declaration, ast::variable_declaration,
     ( t.template_parameter_variable_initializer_unit )[
         helper::construct<ast::variable_declaration>( attribute::holder_kind::k_ref, ph::_1 )
@@ -402,7 +383,7 @@ R( template_parameter_variable_declaration, ast::variable_declaration,
 
 R( template_parameter_variable_initializer_unit, ast::variable_declaration_unit,
     ( t.identifier_relative > -t.value_initializer_unit )[
-        helper::construct<ast::variable_declaration_unit>( ph::_1, attribute::decl::k_default, ph::_2 ) // TODO: decl::onlymeta?
+        helper::construct<ast::variable_declaration_unit>( ph::_1, ADefault, ph::_2 ) // TODO: decl::onlymeta?
         ]
 )
 
@@ -414,8 +395,8 @@ R( template_parameter_variable_declaration_list, ast::parameter_list_t,
 )
 
 
-// ====================================================================================================
-// ====================================================================================================
+/* ==================================================================================================== */
+/* ==================================================================================================== */
 RN( variable_declaration_statement, ast::variable_declaration_statement_ptr,
     ( t.variable_declaration > t.statement_termination )[
         helper::make_node_ptr<ast::variable_declaration_statement>( ph::_1 )
@@ -441,31 +422,29 @@ R( variable_initializer_unit, ast::variable_declaration_unit,
 )
 
 
-// ====================================================================================================
-// ====================================================================================================
-RN( import_statement, ast::import_statement_ptr,
-    ( make_keyword( "import" )
-    > x3::attr(nullptr) /* work around to avoid this rule to be adapted to vector(pass type at random) */
-    > t.import_decl_unit_list
-    > t.statement_termination
-    )[
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+import_statement:
+  | IMPORT
+    x3::attr(nullptr) /* work around to avoid this rule to be adapted to vector(pass type at random) */
+    import_decl_unit_list
+    statement_termination
+    {
         helper::make_node_ptr<ast::import_statement>( ph::_2 )
-        ]
-)
+    }
 
-R( import_decl_unit, ast::import_decl_unit,
-    t.normal_identifier_sequence[
-        helper::construct<ast::import_decl_unit>( ph::_1 )
-        ]
-)
+import_decl_unit:
+  | normal_identifier_sequence {
+        helper::construct<ast::import_decl_unit>( $1 )
+  }
 
-R( import_decl_unit_list, ast::import_decl_unit_list,
-    t.import_decl_unit % x3::lit( ',' )
-)
+import_decl_unit_list:
+  | import_decl_unit % x3::lit( ',' ) { $1 }
 
 
-// ====================================================================================================
-// ====================================================================================================
+
+/* ==================================================================================================== */
+/* ==================================================================================================== */
 R( control_flow_statement, ast::statement_ptr,
     ( t.while_statement
     | t.if_statement
@@ -501,44 +480,28 @@ RN( if_statement, ast::if_statement_ptr,
 )
 
 
-// ====================================================================================================
-// ====================================================================================================
-RN( empty_statement, ast::empty_statement_ptr,
-    t.statement_termination[
-        helper::make_node_ptr<ast::empty_statement>()
-        ]
-)
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+empty_statement:
+  | statement_termination { Empty_statement }
 
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+return_statement:
+  | RETURN expression statement_termination { $1 }
 
-// ====================================================================================================
-// ====================================================================================================
-RN( return_statement, ast::return_statement_ptr,
-    ( make_keyword( "return" )
-    > t.expression > t.statement_termination
-    )[
-        helper::make_node_ptr<ast::return_statement>( ph::_1 )
-        ]
-)
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+expression_statement:
+  | expression statement_termination
+    { $1 }
 
+/* ==================================================================================================== */
+statement_termination:
+  | SEMI { () }
 
-// ====================================================================================================
-// ====================================================================================================
-RN( expression_statement, ast::expression_statement_ptr,
-    ( t.expression > t.statement_termination )[
-        helper::make_node_ptr<ast::expression_statement>( ph::_1 )
-        ]
-)
-
-
-// ====================================================================================================
-//
-R( statement_termination, x3::unused_type,
-    x3::lit( ';' )
-)
-
-
-// ====================================================================================================
-// TODO: make id_expression
+/* ==================================================================================================== */
+/* TODO: make id_expression */
 RN( id_expression, ast::id_expression_ptr,
     ( t.conditional_expression
     )[
@@ -552,7 +515,7 @@ RN( id_expression, ast::id_expression_ptr,
 )
 
 
-// ====================================================================================================
+/* ==================================================================================================== */
 R( expression, ast::expression_ptr,
     t.assign_expression // NOT commma_expression
     )
@@ -735,8 +698,8 @@ R( argument_list, ast::expression_list,
 )
 
 
-// ====================================================================================================
-// ====================================================================================================
+/* ==================================================================================================== */
+/* ==================================================================================================== */
 RN( lambda_expression, ast::lambda_expression_ptr,
     ( t.lambda_introducer
     > -t.template_parameter_variable_declaration_list
@@ -766,8 +729,8 @@ t.parameter_variable_declaration_list
     > t.function_body_block
 */
 
-// ====================================================================================================
-// ====================================================================================================
+/* ==================================================================================================== */
+/* ==================================================================================================== */
 R( primary_value, ast::value_ptr,
     ( t.boolean_literal
     | t.identifier_value_set
@@ -778,7 +741,7 @@ R( primary_value, ast::value_ptr,
 )
 
 
-// ====================================================================================================
+/* ==================================================================================================== */
 R( identifier_value_set, ast:: identifier_value_base_ptr,
     t.template_instance_identifier | t.identifier
 )
@@ -829,7 +792,7 @@ R( template_argument_list, ast::expression_list,
         ]
 )
 
-// ====================================================================================================
+/* ==================================================================================================== */
 R( numeric_literal, ast::value_ptr,
     ( t.float_literal
     | t.integer_literal
@@ -842,15 +805,15 @@ RN( integer_literal, ast::intrinsic::int32_value_ptr,
         ]
 )
 
-// TODO: check range
+/* TODO: check range */
 RN( float_literal, ast::intrinsic::float_value_ptr,
     t.fp_[
         helper::make_node_ptr<ast::intrinsic::float_value>( ph::_1 )
         ]
 )
 
-// 1.0
-// 1.e0
+/* 1.0 */
+/* 1.e0 */
 struct very_strict_fp_policies
     : public x3::strict_ureal_policies<long double>
 {
@@ -860,7 +823,7 @@ struct very_strict_fp_policies
 x3::real_parser<long double, very_strict_fp_policies> const fp_;
 
 #if 0
-// TODO:
+/* TODO: */
 fp <-
 ( fractional_constant >> -exponent_part>> -floating_suffix )
 | ( +digit_charset >> exponent_part >> -floating_suffix )
@@ -879,14 +842,14 @@ floating_suffix <-
 #endif
 
 
-// ====================================================================================================
+/* ==================================================================================================== */
 RN( boolean_literal, ast::intrinsic::boolean_value_ptr,
     x3::bool_[
         helper::make_node_ptr<ast::intrinsic::boolean_value>( ph::_1 )
         ]
 )
 
-// ====================================================================================================
+/* ==================================================================================================== */
 RN( array_literal, ast::intrinsic::array_value_ptr,
     ( ( x3::lit( '[' ) >> x3::lit( ']' ) )[
         helper::make_node_ptr<ast::intrinsic::array_value>()
@@ -896,7 +859,7 @@ RN( array_literal, ast::intrinsic::array_value_ptr,
             ] )
 )
 
-// ====================================================================================================
+/* ==================================================================================================== */
 RN( string_literal, ast::intrinsic::string_value_ptr,
     t.string_literal_sequence[
         helper::make_node_ptr<ast::intrinsic::string_value>( ph::_1 )
@@ -915,8 +878,8 @@ R( escape_sequence, char,
 )
 
 
-// ====================================================================================================
-// ====================================================================================================
+/* ==================================================================================================== */
+/* ==================================================================================================== */
 R( identifier_sequence, std::string,
     ( t.operator_identifier_sequence
     | t.normal_identifier_sequence

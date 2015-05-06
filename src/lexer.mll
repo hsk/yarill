@@ -25,8 +25,12 @@ rule token = parse
     { NEW }
 | "include" { (token2 lexbuf) }
 | "this" { THIS }
-| "class" { STRUCT }
+| "class" { CLASS }
 | "trait" { TRAIT }
+| "onlymeta" { ONLYMETA }
+| "meta" { META }
+| "intrinsic" { INTRINSIC }
+| "override" { OVERRIDE }
 | "<:" { IMPLEMENT }
 | ":>" { RIMPLEMENT }
 | "=>" { ARROW }

@@ -8,3 +8,10 @@ type e =
 
 type d = 
   | DFun of string * (string * t) list * t * e list
+
+type a =
+  | AOnlymeta
+  | AMeta
+  | AIntrinsic
+  | AOverride
+  | ADefault
