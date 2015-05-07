@@ -156,7 +156,7 @@ parameter_variable_initializer_unit:
 
 parameter_variable_declaration_list:
     | LPAREN RPAREN { [] }
-    | LPAREN parameter_variable_declaration % x3::lit( ',' ) RPAREN { $2 }
+    | LPAREN parameter_variable_declaration % x3::lit( COMMA ) RPAREN { $2 }
 
 /* value initializer unit
  * Ex.
@@ -184,7 +184,7 @@ decl_attribute:
     | OVERRIDE { AOverride }
 
 decl_attribute_list:
-  | decl_attribute[helper::make_merged_bitflag( $1 )] % x3::lit( ',' ) )
+  | decl_attribute[merged_bitflag( $1 )] % COMMA
   | x3::eps
 
 /* ==================================================================================================== */
@@ -203,7 +203,7 @@ base_class_type:
   | LT id_expression { $2 }
 
 mixin_traits_list:
-  | LBRACK  ( t.id_expression % ',' ) RBRACK { $2 }
+  | LBRACK  (id_expression % COMMA) RBRACK { $2 }
 
 class_body_block:
   | LBRACE class_body_statements RBRACE { $2 }
@@ -263,7 +263,7 @@ class_variable_initializers:
 
 
 class_variable_initializer_list:
-  | class_variable_initializer_unit % x3::lit( ',' )
+  | class_variable_initializer_unit % COMMA
     { }
 
 
@@ -309,8 +309,7 @@ extern_class_declaration_statement:
     }
 
 extern_decl_attribute_list:
-  | decl_attribute_list >> x3::eps{helper::make_merged_bitflag( AExtern )}
-
+  | decl_attribute_list { AExtern :: $1 }
 
 
 /* ==================================================================================================== */
@@ -326,7 +325,7 @@ template_parameter_variable_initializer_unit:
 
 template_parameter_variable_declaration_list:
   | x3::lit( '!' ) LPAREN RPAREN  { }
-  | x3::lit( '!' ) LPAREN template_parameter_variable_declaration % x3::lit( ',' ) ) RPAREN { }
+  | x3::lit( '!' ) LPAREN (template_parameter_variable_declaration % COMMA) RPAREN { }
 
 
 /* ==================================================================================================== */
@@ -342,9 +341,7 @@ variable_holder_kind_specifier:
 
 variable_declaration:
   | variable_holder_kind_specifier variable_initializer_unit
-    {
-      VariableDeclaration($1, $2)
-    }
+    { VariableDeclaration($1, $2) }
 
 variable_initializer_unit:
   | identifier_relative decl_attribute_list value_initializer_unit 
@@ -354,17 +351,14 @@ variable_initializer_unit:
 /* ==================================================================================================== */
 /* ==================================================================================================== */
 import_statement:
-  | IMPORT
-    x3::attr(nullptr) /* work around to avoid this rule to be adapted to vector(pass type at random) */
-    import_decl_unit_list
-    statement_termination
+  | IMPORT import_decl_unit_list statement_termination
     { ImportStatement($2) }
 
 import_decl_unit:
   | normal_identifier_sequence { ImportDeclUnit($1) }
 
 import_decl_unit_list:
-  | import_decl_unit % x3::lit( ',' ) { $1 }
+  | (import_decl_unit % COMMA) { $1 }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -416,133 +410,106 @@ expression:
 commma_expression:
   | assign_expression
     *tagged(
-        ( x3::lit( ',' ) assign_expression ){ $1 }
+        (COMMA assign_expression){ $1 }
 
 assign_expression:
   | conditional_expression
-    >> *( ( x3::lit( "=" ) >> t.conditional_expression )[helper::make_left_assoc_binary_op_node_ptr( "=", $1 )]
+    >> *( ( ASSIGN >> conditional_expression )[left_assoc_binary_op_node_ptr( "=", $1 )]
         )
 
 conditional_expression:
-    logical_or_expression
+  | logical_or_expression
     /* TODO: add conditional operator( ? : ) */
 
 logical_or_expression:
   | logical_and_expression
     >> *tagged(
-        ( x3::lit( "||" ) > t.logical_and_expression )[helper::make_left_assoc_binary_op_node_ptr( "||", $1 )]
+        ( BARBAR logical_and_expression )[left_assoc_binary_op_node_ptr( "||", $1 )]
         )
 
 logical_and_expression:
-    t.bitwise_or_expression
+    bitwise_or_expression
     >> *tagged(
-        ( x3::lit( "&&" ) >> t.bitwise_or_expression )[helper::make_left_assoc_binary_op_node_ptr( "&&", $1 )]
+        ( AMPAMP bitwise_or_expression )[left_assoc_binary_op_node_ptr( "&&", $1 )]
         )
 
 bitwise_or_expression:
-  | t.bitwise_xor_expression
+  | bitwise_xor_expression
     >> *tagged(
-        ( x3::lit( "|" ) >> t.bitwise_xor_expression )[helper::make_left_assoc_binary_op_node_ptr( "|", $1 )]
+        ( BAR bitwise_xor_expression )[left_assoc_binary_op_node_ptr( "|", $1 )]
         )
 
 bitwise_xor_expression:
   | bitwise_and_expression
     >> *tagged(
-        ( x3::lit( "^" ) >> t.bitwise_and_expression )[helper::make_left_assoc_binary_op_node_ptr( "^", $1 )]
+        ( x3::lit( "^" ) >> bitwise_and_expression )[left_assoc_binary_op_node_ptr( "^", $1 )]
         )
 
 bitwise_and_expression:
-  | t.equality_expression
+  | equality_expression
     >> *tagged(
-        ( x3::lit( "&" ) >> t.equality_expression )[helper::make_left_assoc_binary_op_node_ptr( "&", $1 )]
+        ( x3::lit( "&" ) >> equality_expression )[left_assoc_binary_op_node_ptr( "&", $1 )]
         )
 
 equality_expression:
-  | t.relational_expression
+  | relational_expression
     >> *tagged(
-          ( x3::lit( "==" ) >> t.relational_expression )[helper::make_left_assoc_binary_op_node_ptr( "==", $1 )]
-        | ( x3::lit( "!=" ) >> t.relational_expression )[helper::make_left_assoc_binary_op_node_ptr( "!=", $1 )]
+          ( x3::lit( "==" ) >> relational_expression )[left_assoc_binary_op_node_ptr( "==", $1 )]
+        | ( x3::lit( "!=" ) >> relational_expression )[left_assoc_binary_op_node_ptr( "!=", $1 )]
         )
 
 relational_expression:
-  | t.shift_expression
+  | shift_expression
     >> *tagged(
-          ( x3::lit( "<=" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( "<=", $1 )]
-        | ( x3::lit( "<" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( "<", $1 )]
-        | ( x3::lit( ">=" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( ">=", $1 )]
-        | ( x3::lit( ">" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( ">", $1 )]
+          ( x3::lit( "<=" ) >> shift_expression )[left_assoc_binary_op_node_ptr( "<=", $1 )]
+        | ( x3::lit( "<" ) >> shift_expression )[left_assoc_binary_op_node_ptr( "<", $1 )]
+        | ( x3::lit( ">=" ) >> shift_expression )[left_assoc_binary_op_node_ptr( ">=", $1 )]
+        | ( x3::lit( ">" ) >> shift_expression )[left_assoc_binary_op_node_ptr( ">", $1 )]
         )
 
 shift_expression:
   | add_sub_expression
     >> *tagged(
-          ( x3::lit( "<<" ) >> t.add_sub_expression )[helper::make_left_assoc_binary_op_node_ptr( "<<", $1 )]
-        | ( x3::lit( ">>" ) >> t.add_sub_expression )[helper::make_left_assoc_binary_op_node_ptr( ">>", $1 )]
+          ( x3::lit( "<<" ) >> add_sub_expression )[left_assoc_binary_op_node_ptr( "<<", $1 )]
+        | ( x3::lit( ">>" ) >> add_sub_expression )[left_assoc_binary_op_node_ptr( ">>", $1 )]
         )
 
 add_sub_expression:
   | mul_div_rem_expression
     >> *tagged(
-          ( x3::lit( "+" ) >> t.mul_div_rem_expression )[helper::make_left_assoc_binary_op_node_ptr( "+", $1 )]
-        | ( x3::lit( "-" ) >> t.mul_div_rem_expression )[helper::make_left_assoc_binary_op_node_ptr( "-", $1 )]
+          ( x3::lit( "+" ) >> mul_div_rem_expression )[left_assoc_binary_op_node_ptr( "+", $1 )]
+        | ( x3::lit( "-" ) >> mul_div_rem_expression )[left_assoc_binary_op_node_ptr( "-", $1 )]
         )
 mul_div_rem_expression:
   | unary_expression
     >> *tagged(
-          ( x3::lit( "*" ) >> t.unary_expression )[helper::make_left_assoc_binary_op_node_ptr( "*", $1 )]
-        | ( x3::lit( "/" ) >> t.unary_expression )[helper::make_left_assoc_binary_op_node_ptr( "/", $1 )]
-        | ( x3::lit( "%" ) >> t.unary_expression )[helper::make_left_assoc_binary_op_node_ptr( "%", $1 )]
+          ( x3::lit( "*" ) >> unary_expression )[left_assoc_binary_op_node_ptr( "*", $1 )]
+        | ( x3::lit( "/" ) >> unary_expression )[left_assoc_binary_op_node_ptr( "/", $1 )]
+        | ( x3::lit( "%" ) >> unary_expression )[left_assoc_binary_op_node_ptr( "%", $1 )]
         )
 
 unary_expression:
-    | postfix_expression { $1 }
-    | tagged(
-        ( x3::lit( '-' ) >> t.unary_expression )[
-            helper::make_unary_prefix_op_node_ptr( "-", $1 )
-            ])
-    | tagged(
-        ( x3::lit( '+' ) >> t.unary_expression )[
-            helper::make_unary_prefix_op_node_ptr( "+", $1 )
-            ])
-    | tagged(
-        ( x3::lit( '*' ) >> t.unary_expression )[
-            dereference_expression>( $1 )
-            ])
-    | tagged(
-        ( x3::lit( '&' ) >> t.unary_expression )[
-            addressof_expression>( $1 )
-            ])
-    | tagged(
-        ( make_keyword( "new" ) >> t.unary_expression )[
-            addressof_expression>( $1 )
-            ])
+  | postfix_expression { $1 }
+  | SUB unary_expression { Unary("-", $2) }
+  | ADD unary_expression { Unary("+", $2) }
+  | MUL unary_expression { Unary("*", $2) }
+  | AMP unary_expression { Unary("&", $2) }
+  | NEW unary_expression { Unary("new", $2) }
     
-
 postfix_expression:
-  | primary_expression
-    >> *tagged(
-            ( x3::lit( '.' ) >> t.identifier_value_set )[
-                helper::make_assoc_node_ptr<ast::element_selector_expression>( $1 )
-                ]
-          | ( x3::lit( '[' ) > -t.expression > x3::lit( ']' ) )[
-                helper::make_assoc_node_ptr<ast::subscrpting_expression>( $1 )
-                ]
-          | ( t.argument_list )[
-                helper::make_assoc_node_ptr<ast::call_expression>( $1 )
-                ]
-       )
+  | primary_expression { $1 }
+  | primary_expression DOT identifier_value_set { ElementSelectorExpression($1) }
+  | primary_expression LBRACK -expression RBRACK { SubscrptingExpression($1) }
+  | primary_expression argument_list { CallExpression ($1) }
 
 primary_expression:
-    | primary_value { $1 }
-    | LPAREN expression RPAREN { $2 }
-    | lambda_expression { $1 }
+  | primary_value { $1 }
+  | LPAREN expression RPAREN { $2 }
+  | lambda_expression { $1 }
     
-
-
 argument_list:
   | LPAREN RPAREN { [] }
-  | LPAREN (assign_expression % ',') RPAREN { $2 }
-
+  | LPAREN (assign_expression % COMMA) RPAREN { $2 }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -559,10 +526,10 @@ lambda_introducer:
   | BACKBACK { () }
 
 /*
-t.parameter_variable_declaration_list
-    > t.decl_attribute_list
-    > -t.type_specifier
-    > t.function_body_block
+parameter_variable_declaration_list
+    > decl_attribute_list
+    > -type_specifier
+    > function_body_block
 */
 
 /* ==================================================================================================== */
@@ -580,7 +547,6 @@ identifier_value_set:
   | template_instance_identifier { $1 }
   | identifier { $1 }
 
-
 identifier:
   | identifier_from_root { $1 }
   | identifier_relative { $1 }
@@ -592,7 +558,6 @@ identifier_relative:
 identifier_from_root:
   | DOT identifier_sequence
     { IdentifierValue($1, true) }
-
 
 template_instance_identifier:
   | template_instance_identifier_from_root { $1 }
@@ -607,8 +572,8 @@ template_instance_identifier_from_root:
     { TemplateInstanceValue($1, $2, true) }
 
 template_argument_list:
-    | x3::lit( '!' ) argument_list { }
-    | x3::lit( '!' ) primary_expression { ExpressionList($2) }
+  | x3::lit( '!' ) argument_list { }
+  | x3::lit( '!' ) primary_expression { ExpressionList($2) }
 
 /* ==================================================================================================== */
 numeric_literal:
@@ -661,12 +626,8 @@ boolean_literal:
 
 /* ==================================================================================================== */
 array_literal:
-    | ( x3::lit( '[' ) >> x3::lit( ']' ) )[
-        intrinsic::array_value>()
-        ] )
-    | ( ( x3::lit( '[' ) >> ( t.assign_expression % ',' ) >> x3::lit( ']' ) )[
-            intrinsic::array_value>( $1 )
-            ] )
+  | LBRACK RBRACK { ArrayValue[] }
+  | LBRACK ( assign_expression % COMMA ) RBRACK { ArrayValue $2 }
 
 /* ==================================================================================================== */
 string_literal:
@@ -675,7 +636,7 @@ string_literal:
 
 string_literal_sequence:
   | x3::lexeme {
-        x3::lit( '"' ) >> *( ( t.escape_sequence | x3::char_ ) - x3::lit( '"' ) ) >> x3::lit( '"' )
+        x3::lit( '"' ) >> *( ( escape_sequence | x3::char_ ) - x3::lit( '"' ) ) >> x3::lit( '"' )
     }
 
 /* TODO: support some escape sequences */
