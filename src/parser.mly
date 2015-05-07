@@ -8,7 +8,7 @@ open Ast
 %token SEMI
 %token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
 %token COLON COMMA
-%token ASSIGN
+%token EQ
 %token RETURN
 %token EOF
 %token ADD SUB
@@ -46,7 +46,7 @@ stms:
 | stm stms { $1::$2 }
 
 stm:
-| VAL ID ASSIGN LBRACK lists RBRACK SEMI {  } 
+| VAL ID EQ LBRACK lists RBRACK SEMI {  } 
 exps:
 | exp { [$1] }
 | exp exps { $1::$2 }
@@ -166,11 +166,11 @@ parameter_variable_declaration_list:
  */
 value_initializer_unit:
     | value_initializer_unit_only_value { assign }
-    | type_specifier -(ASSIGN expression)
+    | type_specifier -(EQ expression)
         { ($1, $2) }
 
 value_initializer_unit_only_value:
-    | ASSIGN expression
+    | EQ expression
         { $2 }
 
 /* ==================================================================================================== */
@@ -402,91 +402,67 @@ id_expression:
   | conditional_expression
     { $1 }
 
-
 /* ==================================================================================================== */
 expression:
   | assign_expression /* NOT commma_expression */ { $1 }
 
 commma_expression:
-  | assign_expression
-    *tagged(
-        (COMMA assign_expression){ $1 }
+  | assign_expression { $1 }
+  | assign_expression COMMA comma_expression { $1 }
 
 assign_expression:
-  | conditional_expression
-    >> *( ( ASSIGN >> conditional_expression )[left_assoc_binary_op_node_ptr( "=", $1 )]
-        )
+  | conditional_expression EQ conditional_expression { Bin($1, "=", $3) }
 
 conditional_expression:
   | logical_or_expression
     /* TODO: add conditional operator( ? : ) */
 
 logical_or_expression:
-  | logical_and_expression
-    >> *tagged(
-        ( BARBAR logical_and_expression )[left_assoc_binary_op_node_ptr( "||", $1 )]
-        )
+  | logical_and_expression { $1 }
+  | logical_and_expression BARBAR logical_and_expression { Bin($1, "||", $2) }
 
 logical_and_expression:
-    bitwise_or_expression
-    >> *tagged(
-        ( AMPAMP bitwise_or_expression )[left_assoc_binary_op_node_ptr( "&&", $1 )]
-        )
+  | bitwise_or_expression { $1 }
+  | bitwise_or_expression AMPAMP bitwise_or_expression { Bin($1, "&&", $2) }
 
 bitwise_or_expression:
-  | bitwise_xor_expression
-    >> *tagged(
-        ( BAR bitwise_xor_expression )[left_assoc_binary_op_node_ptr( "|", $1 )]
-        )
+  | bitwise_xor_expression { $1 }
+  | bitwise_xor_expression BAR bitwise_xor_expression { Bin($1, "|", $2) }
 
 bitwise_xor_expression:
-  | bitwise_and_expression
-    >> *tagged(
-        ( x3::lit( "^" ) >> bitwise_and_expression )[left_assoc_binary_op_node_ptr( "^", $1 )]
-        )
+  | bitwise_and_expression { $1 }
+  | bitwise_and_expression XOR bitwise_and_expression { Bin($1, "^", $2) }
 
 bitwise_and_expression:
-  | equality_expression
-    >> *tagged(
-        ( x3::lit( "&" ) >> equality_expression )[left_assoc_binary_op_node_ptr( "&", $1 )]
-        )
+  | equality_expression { $1 }
+  | equality_expression AMP equality_expression { Bin($1, "&", $2) }
 
 equality_expression:
-  | relational_expression
-    >> *tagged(
-          ( x3::lit( "==" ) >> relational_expression )[left_assoc_binary_op_node_ptr( "==", $1 )]
-        | ( x3::lit( "!=" ) >> relational_expression )[left_assoc_binary_op_node_ptr( "!=", $1 )]
-        )
+  | relational_expression { $1 }
+  | relational_expression EQEQ relational_expression { Bin($1, "==", $2) }
+  | relational_expression NE relational_expression { Bin($1, "!=", $2) }
 
 relational_expression:
-  | shift_expression
-    >> *tagged(
-          ( x3::lit( "<=" ) >> shift_expression )[left_assoc_binary_op_node_ptr( "<=", $1 )]
-        | ( x3::lit( "<" ) >> shift_expression )[left_assoc_binary_op_node_ptr( "<", $1 )]
-        | ( x3::lit( ">=" ) >> shift_expression )[left_assoc_binary_op_node_ptr( ">=", $1 )]
-        | ( x3::lit( ">" ) >> shift_expression )[left_assoc_binary_op_node_ptr( ">", $1 )]
-        )
+  | shift_expression { $1 }
+  | shift_expression LE shift_expression { Bin($1, "<=", $2 ) }
+  | shift_expression LT shift_expression { Bin($1, "<",  $2 ) }
+  | shift_expression GE shift_expression { Bin($1, ">=", $2 ) }
+  | shift_expression GT shift_expression { Bin($1, ">",  $2 ) }
 
 shift_expression:
-  | add_sub_expression
-    >> *tagged(
-          ( x3::lit( "<<" ) >> add_sub_expression )[left_assoc_binary_op_node_ptr( "<<", $1 )]
-        | ( x3::lit( ">>" ) >> add_sub_expression )[left_assoc_binary_op_node_ptr( ">>", $1 )]
-        )
+  | add_sub_expression { $1 }
+  | add_sub_expression LSHIFT add_sub_expression { Bin($1, "<<", $2) }
+  | add_sub_expression RSHIFT add_sub_expression { Bin($1, ">>", $2) }
 
 add_sub_expression:
-  | mul_div_rem_expression
-    >> *tagged(
-          ( x3::lit( "+" ) >> mul_div_rem_expression )[left_assoc_binary_op_node_ptr( "+", $1 )]
-        | ( x3::lit( "-" ) >> mul_div_rem_expression )[left_assoc_binary_op_node_ptr( "-", $1 )]
-        )
+  | mul_div_rem_expression { $1 }
+  | mul_div_rem_expression ADD mul_div_rem_expression { Bin($1, "+", $2) }
+  | unary_expression SUB mul_div_rem_expression { Bin($1, "-", $2) }
 mul_div_rem_expression:
-  | unary_expression
-    >> *tagged(
-          ( x3::lit( "*" ) >> unary_expression )[left_assoc_binary_op_node_ptr( "*", $1 )]
-        | ( x3::lit( "/" ) >> unary_expression )[left_assoc_binary_op_node_ptr( "/", $1 )]
-        | ( x3::lit( "%" ) >> unary_expression )[left_assoc_binary_op_node_ptr( "%", $1 )]
-        )
+  | unary_expression { $1 }
+  | unary_expression MUL unary_expression { Bin($1, "*", $2) }
+  | unary_expression DIV unary_expression { Bin($1, "/", $2) }
+  | unary_expression REM unary_expression { Bin($1, "%", $2) }
 
 unary_expression:
   | postfix_expression { $1 }
