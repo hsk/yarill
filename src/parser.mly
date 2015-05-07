@@ -80,83 +80,83 @@ decltype(auto) tagged( L&& rule )
 program: module eof { $1 }
 
 module:
-    | top_level_statements { $1 }
+  | top_level_statements { $1 }
 
 top_level_statements:
-    | { [] }
-    | top_level_statement top_level_statements { $1::$2 }
+  | { [] }
+  | top_level_statement top_level_statements { $1::$2 }
 
 top_level_statement :
-    | function_definition_statement { $1 }
-    | class_definition_statement { $1 }
-    | extern_statement  { $1 }
-    | import_statement  { $1 }
-    | empty_statement  { $1 }
-    | expression_statement  { $1 }   /* this rule must be located at last */
+  | function_definition_statement { $1 }
+  | class_definition_statement { $1 }
+  | extern_statement  { $1 }
+  | import_statement  { $1 }
+  | empty_statement  { $1 }
+  | expression_statement  { $1 }   /* this rule must be located at last */
 
 function_definition_statement:
-    | DEF identifier_relative
-        -template_parameter_variable_declaration_list
-        parameter_variable_declaration_list
-        decl_attribute_list
-        -type_specifier
-        function_body_block
-        { Function_definition_statement($3, $2, $4, $5, $6, $7) }
+  | DEF identifier_relative
+      -template_parameter_variable_declaration_list
+      parameter_variable_declaration_list
+      decl_attribute_list
+      -type_specifier
+      function_body_block
+      { Function_definition_statement($3, $2, $4, $5, $6, $7) }
 
 function_body_statements_list:
-    | LBRACE program_body_statements_list RBRACE { $2 }
-    | function_online_body_for_normal { $1 }
+  | LBRACE program_body_statements_list RBRACE { $2 }
+  | function_online_body_for_normal { $1 }
 
 function_body_statements_list_for_lambda:
-    | LBRACE program_body_statements_list RBRACE { $2 }
-    | function_online_body_for_lambda { $1 }
+  | LBRACE program_body_statements_list RBRACE { $2 }
+  | function_online_body_for_lambda { $1 }
 
 function_online_body_for_normal:
-    | ARROW expression statement_termination { $2 }
+  | ARROW expression statement_termination { $2 }
 
 function_online_body_for_lambda:
-    | ARROW expression { $2 }
+  | ARROW expression { $2 }
 
 function_body_block:
-    | function_body_statements_list { $1 }
+  | function_body_statements_list { $1 }
 
 /* executable scope, such as function, block, lambda, ... */
 program_body_statement:
-    | block_statement { $1 }
-    | variable_declaration_statement { $1 }
-    | control_flow_statement { $1 }
-    | return_statement { $1 }
-    | empty_statement { $1 }
-    | expression_statement { $1 }   /* NOTE: this statement must be set at last */
+  | block_statement { $1 }
+  | variable_declaration_statement { $1 }
+  | control_flow_statement { $1 }
+  | return_statement { $1 }
+  | empty_statement { $1 }
+  | expression_statement { $1 }   /* NOTE: this statement must be set at last */
 
 program_body_statements_list:
-    | *program_body_statement { $1 }
+  | *program_body_statement { $1 }
 
 program_body_statements:
-    | program_body_statements_list { $1 }
+  | program_body_statements_list { $1 }
 
 
 block_statement:
-    | LBRACE program_body_statements RBRACE { $1 }
+  | LBRACE program_body_statements RBRACE { $1 }
 
 
 /* ==================================================================================================== */
 parameter_variable_holder_kind_specifier:
-    | VAL { "val" }
-    | REF { "ref" }
-    | { "ref" }
+  | VAL { "val" }
+  | REF { "ref" }
+  | { "ref" }
 
 parameter_variable_declaration:
-    | parameter_variable_holder_kind_specifier
-      parameter_variable_initializer_unit
-      { ($1, $2) }
+  | parameter_variable_holder_kind_specifier
+    parameter_variable_initializer_unit
+    { ($1, $2) }
 
 parameter_variable_initializer_unit:
-    | -identifier_relative value_initializer_unit { ($1,$2) }
+  | -identifier_relative value_initializer_unit { ($1,$2) }
 
 parameter_variable_declaration_list:
-    | LPAREN RPAREN { [] }
-    | LPAREN parameter_variable_declaration % x3::lit( COMMA ) RPAREN { $2 }
+  | LPAREN RPAREN { [] }
+  | LPAREN parameter_variable_declaration % x3::lit( COMMA ) RPAREN { $2 }
 
 /* value initializer unit
  * Ex.
@@ -165,23 +165,23 @@ parameter_variable_declaration_list:
  * :int
  */
 value_initializer_unit:
-    | value_initializer_unit_only_value { assign }
-    | type_specifier -(EQ expression)
-        { ($1, $2) }
+  | value_initializer_unit_only_value { assign }
+  | type_specifier -(EQ expression)
+      { ($1, $2) }
 
 value_initializer_unit_only_value:
-    | EQ expression
-        { $2 }
+  | EQ expression
+      { $2 }
 
 /* ==================================================================================================== */
 type_specifier:
-    | COLON id_expression { $2 }
+  | COLON id_expression { $2 }
 
 decl_attribute:
-    | ONLYMETA { AOnlymeta }
-    | META { AMeta }
-    | INTRINSIC { AIntrinsic }
-    | OVERRIDE { AOverride }
+  | ONLYMETA { AOnlymeta }
+  | META { AMeta }
+  | INTRINSIC { AIntrinsic }
+  | OVERRIDE { AOverride }
 
 decl_attribute_list:
   | decl_attribute[merged_bitflag( $1 )] % COMMA
@@ -294,9 +294,7 @@ extern_function_declaration_statement:
     extern_decl_attribute_list
     type_specifier
     string_literal_sequence
-    {
-        ExternFunctionDeclarationStatement($2, $1, $3, $4, $5, $6)
-    }
+    { ExternFunctionDeclarationStatement($2, $1, $3, $4, $5, $6) }
 
 extern_class_declaration_statement:
   | CLASS
@@ -304,9 +302,7 @@ extern_class_declaration_statement:
     -template_parameter_variable_declaration_list
     extern_decl_attribute_list
     string_literal_sequence
-    {
-        ExternClassDeclarationStatement($2, $1, $3, $4)
-    }
+    { ExternClassDeclarationStatement($2, $1, $3, $4) }
 
 extern_decl_attribute_list:
   | decl_attribute_list { AExtern :: $1 }
@@ -331,9 +327,8 @@ template_parameter_variable_declaration_list:
 /* ==================================================================================================== */
 /* ==================================================================================================== */
 variable_declaration_statement:
-  | variable_declaration statement_termination {
-        VariableDeclarationStatement($1)
-    }
+  | variable_declaration statement_termination
+    { VariableDeclarationStatement($1) }
 
 variable_holder_kind_specifier:
   | VAL { "val" }
@@ -414,7 +409,7 @@ assign_expression:
   | conditional_expression EQ conditional_expression { Bin($1, "=", $3) }
 
 conditional_expression:
-  | logical_or_expression
+  | logical_or_expression { $1 }
     /* TODO: add conditional operator( ? : ) */
 
 logical_or_expression:
@@ -517,7 +512,6 @@ primary_value:
   | string_literal { $1 }
   | array_literal { $1 }
 
-
 /* ==================================================================================================== */
 identifier_value_set:
   | template_instance_identifier { $1 }
@@ -528,12 +522,10 @@ identifier:
   | identifier_relative { $1 }
 
 identifier_relative:
-  | identifier_sequence
-    { IdentifierValue($1, false) }
+  | identifier_sequence { IdentifierValue($1, false) }
 
 identifier_from_root:
-  | DOT identifier_sequence
-    { IdentifierValue($1, true) }
+  | DOT identifier_sequence { IdentifierValue($1, true) }
 
 template_instance_identifier:
   | template_instance_identifier_from_root { $1 }
@@ -557,23 +549,11 @@ numeric_literal:
   | integer_literal { $1 }
 
 integer_literal:
-  | x3::uint_
-    { Int32Value($1) }
+  | x3::uint_ { Int32Value($1) }
 
 /* TODO: check range */
 float_literal:
-  | fp_
-    { FloatValue($1) }
-
-/* 1.0 */
-/* 1.e0 */
-struct very_strict_fp_policies
-    : public x3::strict_ureal_policies<long double>
-{
-    static bool const allow_leading_dot = false;
-    static bool const allow_trailing_dot = false;
-};
-x3::real_parser<long double, very_strict_fp_policies> const fp_;
+  | fp_ { FloatValue($1) }
 
 /* TODO: */
 /*
@@ -602,7 +582,7 @@ boolean_literal:
 
 /* ==================================================================================================== */
 array_literal:
-  | LBRACK RBRACK { ArrayValue[] }
+  | LBRACK RBRACK { ArrayValue [] }
   | LBRACK ( assign_expression % COMMA ) RBRACK { ArrayValue $2 }
 
 /* ==================================================================================================== */
@@ -627,29 +607,27 @@ identifier_sequence:
   | normal_identifier_sequence { $1 }
 
 operator_identifier_sequence:
-  | OP pre_or_post_or_empty 
-      ( x3::lit( "==" )[helper::append( "==" )]
-      | x3::lit( "!=" )[helper::append( "!=" )]
-      | x3::lit( "||" )[helper::append( "||" )]
-      | x3::lit( "&&" )[helper::append( "&&" )]
-      | x3::lit( "<=" )[helper::append( "<=" )]
-      | x3::lit( ">=" )[helper::append( ">=" )]
-      | x3::lit( "<<" )[helper::append( "<<" )]
-      | x3::lit( ">>" )[helper::append( ">>" )]
-      | x3::lit( "()" )[helper::append( "()" )]
-      | x3::lit( "[]" )[helper::append( "[]" )]
-      | x3::lit( "|" )[helper::append( "|" )]
-      | x3::lit( "^" )[helper::append( "^" )]
-      | x3::lit( "&" )[helper::append( "&" )]
-      | x3::lit( "+" )[helper::append( "+" )]
-      | x3::lit( "-" )[helper::append( "-" )]
-      | x3::lit( "*" )[helper::append( "*" )]
-      | x3::lit( "/" )[helper::append( "/" )]
-      | x3::lit( "%" )[helper::append( "%" )]
-      | x3::lit( "<" )[helper::append( "<" )]
-      | x3::lit( ">" )[helper::append( ">" )]
-      | x3::lit( "=" )[helper::append( "=" )]
-      ) { }
+  | OP pre_or_post_or_empty EQEQ { append("==") }
+  | OP pre_or_post_or_empty NE { append("!=") }
+  | OP pre_or_post_or_empty BARBAR { append("||") }
+  | OP pre_or_post_or_empty AMPAMP { append("&&") }
+  | OP pre_or_post_or_empty LE { append("<=") }
+  | OP pre_or_post_or_empty GE { append(">=") }
+  | OP pre_or_post_or_empty LSHIFT { append("<<") }
+  | OP pre_or_post_or_empty RSHIFT { append(">>") }
+  | OP pre_or_post_or_empty LPAREN RPAREN { append("()") }
+  | OP pre_or_post_or_empty LBRACK RBRACK { append("[]") }
+  | OP pre_or_post_or_empty BAR { append("|") }
+  | OP pre_or_post_or_empty XOR { append("^") }
+  | OP pre_or_post_or_empty AMP { append("&") }
+  | OP pre_or_post_or_empty ADD { append("+") }
+  | OP pre_or_post_or_empty SUB { append("-") }
+  | OP pre_or_post_or_empty MUL { append("*") }
+  | OP pre_or_post_or_empty DIV { append("/") }
+  | OP pre_or_post_or_empty REM { append("%") }
+  | OP pre_or_post_or_empty LT { append("<") }
+  | OP pre_or_post_or_empty GT { append(">") }
+  | OP pre_or_post_or_empty EQ { append("=") }
 
 pre_or_post_or_empty:
   | PRE { "pre" }
