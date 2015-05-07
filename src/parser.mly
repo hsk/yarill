@@ -184,10 +184,8 @@ decl_attribute:
     | OVERRIDE { AOverride }
 
 decl_attribute_list:
-    x3::attr( ADefault )
-    >> ( ( t.decl_attribute[helper::make_merged_bitflag( $1 )] % x3::lit( ',' ) )
-       | x3::eps
-       )
+  | decl_attribute[helper::make_merged_bitflag( $1 )] % x3::lit( ',' ) )
+  | x3::eps
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -232,9 +230,7 @@ class_function_definition_statement:
     -class_variable_initializers
     -type_specifier
     function_body_block
-    {
-        ClassFunctionDefinitionStatement($2, $1, $3, $4, $5, $6, $7)
-    }
+    { ClassFunctionDefinitionStatement($2, $1, $3, $4, $5, $6, $7) }
 
 class_virtual_function_definition_statement:
   | VIRTUAL DEF
@@ -243,68 +239,51 @@ class_virtual_function_definition_statement:
     decl_attribute_list
     type_specifier
     function_body_block
-    {
-            ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4, $5)
-    }
+    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4, $5) }
+
   | VIRTUAL DEF
     identifier_relative
     parameter_variable_declaration_list
     decl_attribute_list
     type_specifier
     statement_termination
-    {
-        ClassVirtualFunctionDefinitionStatement(
-            $1,
-            $2,
-            $3,
-            $4
-            )
-    }
+    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
+
   | VIRTUAL DEF
     identifier_relative
     parameter_variable_declaration_list
     decl_attribute_list
     function_body_block
-    {
-        ClassVirtualFunctionDefinitionStatement(
-            $1,
-            $2,
-            $3,
-            $4
-            )
-    }
+    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
 
 class_variable_initializers:
-  | BAR
-    > x3::attr(nullptr) /* work around to avoid this rule to be adapted to vector(pass type at random) */
+  | BAR /* work around to avoid this rule to be adapted to vector(pass type at random) */
     class_variable_initializer_list
-    {
-        ClassVariableInitializers($2)
-    }
+    { ClassVariableInitializers($2) }
 
 
 class_variable_initializer_list:
-  | class_variable_initializer_unit % x3::lit( ',' ) { }
+  | class_variable_initializer_unit % x3::lit( ',' )
+    { }
 
 
 class_variable_initializer_unit:
-  | identifier_relative value_initializer_unit_only_value {
-    VariableDeclarationUnit($1, ADefault, $2)
-  }
+  | identifier_relative value_initializer_unit_only_value
+    { VariableDeclarationUnit($1, ADefault, $2) }
 
 
 
 class_variable_declaration_statement:
   | variable_declaration statement_termination
-  { ClassVariableDeclarationStatement($1) }
+    { ClassVariableDeclarationStatement($1) }
 
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
 
 extern_statement:
-  | EXTERN extern_function_declaration_statement statement_termination
-  | EXTERN extern_class_declaration_statement statement_termination
+  | EXTERN extern_function_declaration_statement statement_termination { }
+  | EXTERN extern_class_declaration_statement statement_termination { }
     
 
 extern_function_declaration_statement:
@@ -329,9 +308,8 @@ extern_class_declaration_statement:
         ExternClassDeclarationStatement($2, $1, $3, $4)
     }
 
-
 extern_decl_attribute_list:
-  | decl_attribute_list[helper::assign()] >> x3::eps{helper::make_merged_bitflag( AExtern )}
+  | decl_attribute_list >> x3::eps{helper::make_merged_bitflag( AExtern )}
 
 
 
@@ -347,36 +325,30 @@ template_parameter_variable_initializer_unit:
 
 
 template_parameter_variable_declaration_list:
-  | ( ( x3::lit( '!' ) >> x3::lit( '(' ) >> x3::lit( ')' ) )
-    | ( x3::lit( '!' ) >> x3::lit( '(' ) >> ( t.template_parameter_variable_declaration % x3::lit( ',' ) ) >> x3::lit( ')' ) )
-    )
+  | x3::lit( '!' ) LPAREN RPAREN  { }
+  | x3::lit( '!' ) LPAREN template_parameter_variable_declaration % x3::lit( ',' ) ) RPAREN { }
 
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
-RN( variable_declaration_statement, ast::variable_declaration_statement_ptr,
-    ( t.variable_declaration > t.statement_termination )[
-        variable_declaration_statement>( $1 )
-        ]
-)
+variable_declaration_statement:
+  | variable_declaration statement_termination {
+        VariableDeclarationStatement($1)
+    }
 
-R( variable_holder_kind_specifier, attribute::holder_kind,
-    ( make_keyword( "val" )[helper::assign( attribute::holder_kind::k_val )]
-    | make_keyword( "ref" )[helper::assign( attribute::holder_kind::k_ref )]
-    )
-)
+variable_holder_kind_specifier:
+  | VAL { "val" }
+  | REF { "ref" }
 
-R( variable_declaration, ast::variable_declaration,
-    ( t.variable_holder_kind_specifier > t.variable_initializer_unit )[
-        helper::construct<ast::variable_declaration>( $1, $2 )
-        ]
-)
+variable_declaration:
+  | variable_holder_kind_specifier variable_initializer_unit
+    {
+      VariableDeclaration($1, $2)
+    }
 
-R( variable_initializer_unit, ast::variable_declaration_unit,
-    ( t.identifier_relative > t.decl_attribute_list > t.value_initializer_unit )[
-        helper::construct<ast::variable_declaration_unit>( $1, $2, $3 )
-        ]
-)
+variable_initializer_unit:
+  | identifier_relative decl_attribute_list value_initializer_unit 
+    { VariableDeclarationUnit($1, $2, $3) }
 
 
 /* ==================================================================================================== */
@@ -386,61 +358,34 @@ import_statement:
     x3::attr(nullptr) /* work around to avoid this rule to be adapted to vector(pass type at random) */
     import_decl_unit_list
     statement_termination
-    {
-        import_statement>( $2 )
-    }
+    { ImportStatement($2) }
 
 import_decl_unit:
-  | normal_identifier_sequence {
-        helper::construct<ast::import_decl_unit>( $1 )
-  }
+  | normal_identifier_sequence { ImportDeclUnit($1) }
 
 import_decl_unit_list:
   | import_decl_unit % x3::lit( ',' ) { $1 }
 
-
-
 /* ==================================================================================================== */
 /* ==================================================================================================== */
-R( control_flow_statement, ast::statement_ptr,
-    ( t.while_statement
-    | t.if_statement
-    )
-)
+control_flow_statement:
+  | while_statement { $1 }
+  | if_statement { $1 }
 
+while_statement:
+  | WHILE LPAREN expression RPAREN program_body_statement
+    { WhileStatement($1, $2) }
 
-RN( while_statement, ast::while_statement_ptr,
-    ( x3::lit( "while" )
-    > ( x3::lit( "(" ) > t.expression > x3::lit( ")" ) )
-    > t.program_body_statement
-    )[
-        while_statement>(
-            $1,
-            $2
-            )
-        ]
-)
-
-
-RN( if_statement, ast::if_statement_ptr,
-    ( x3::lit( "if" )
-    > ( x3::lit( "(" ) > t.expression > x3::lit( ")" ) )
-    > t.program_body_statement
-    > -( x3::lit( "else" ) > t.program_body_statement )
-    )[
-        if_statement>(
-            $1,
-            $2,
-            $3
-            )
-        ]
-)
-
+if_statement:
+  | IF LPAREN expression RPAREN program_body_statement
+    { IfStatement($1, $2, $3) }
+  | IF LPAREN expression RPAREN program_body_statement ELSE program_body_statement
+    { IfStatement($1, $2, $3) }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
 empty_statement:
-  | statement_termination { Empty_statement }
+  | statement_termination { EmptyStatement }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -459,124 +404,98 @@ statement_termination:
 
 /* ==================================================================================================== */
 /* TODO: make id_expression */
-RN( id_expression, ast::id_expression_ptr,
-    ( t.conditional_expression
-    )[
-        helper::fun(
-            []( auto&&... args ) {
-                return ast::helper::make_id_expression( std::forward<decltype(args)>( args )... );
-            },
-            $1
-            )
-        ]
-)
+id_expression:
+  | conditional_expression
+    { $1 }
 
 
 /* ==================================================================================================== */
-R( expression, ast::expression_ptr,
-    t.assign_expression // NOT commma_expression
-    )
+expression:
+  | assign_expression /* NOT commma_expression */ { $1 }
 
-R( commma_expression, ast::expression_ptr,
-   t.assign_expression[helper::assign()]
-    >> *tagged(
-        ( x3::lit( ',' ) >> t.assign_expression )[helper::make_left_assoc_binary_op_node_ptr( ",", $1 )]
-        )
-)
+commma_expression:
+  | assign_expression
+    *tagged(
+        ( x3::lit( ',' ) assign_expression ){ $1 }
 
-RN( assign_expression, ast::expression_ptr,
-   t.conditional_expression[helper::assign()]
+assign_expression:
+  | conditional_expression
     >> *( ( x3::lit( "=" ) >> t.conditional_expression )[helper::make_left_assoc_binary_op_node_ptr( "=", $1 )]
         )
 
-)
+conditional_expression:
+    logical_or_expression
+    /* TODO: add conditional operator( ? : ) */
 
-RN( conditional_expression, ast::expression_ptr,
-    t.logical_or_expression[helper::assign()]
-    // TODO: add conditional operator( ? : )
-)
-
-R( logical_or_expression, ast::expression_ptr,
-    t.logical_and_expression[helper::assign()]
+logical_or_expression:
+  | logical_and_expression
     >> *tagged(
         ( x3::lit( "||" ) > t.logical_and_expression )[helper::make_left_assoc_binary_op_node_ptr( "||", $1 )]
         )
-)
 
-R( logical_and_expression, ast::expression_ptr,
-    t.bitwise_or_expression[helper::assign()]
+logical_and_expression:
+    t.bitwise_or_expression
     >> *tagged(
         ( x3::lit( "&&" ) >> t.bitwise_or_expression )[helper::make_left_assoc_binary_op_node_ptr( "&&", $1 )]
         )
-)
 
-R( bitwise_or_expression, ast::expression_ptr,
-    t.bitwise_xor_expression[helper::assign()]
+bitwise_or_expression:
+  | t.bitwise_xor_expression
     >> *tagged(
         ( x3::lit( "|" ) >> t.bitwise_xor_expression )[helper::make_left_assoc_binary_op_node_ptr( "|", $1 )]
         )
-)
 
-R( bitwise_xor_expression, ast::expression_ptr,
-    t.bitwise_and_expression[helper::assign()]
+bitwise_xor_expression:
+  | bitwise_and_expression
     >> *tagged(
         ( x3::lit( "^" ) >> t.bitwise_and_expression )[helper::make_left_assoc_binary_op_node_ptr( "^", $1 )]
         )
-)
 
-R( bitwise_and_expression, ast::expression_ptr,
-    t.equality_expression[helper::assign()]
+bitwise_and_expression:
+  | t.equality_expression
     >> *tagged(
         ( x3::lit( "&" ) >> t.equality_expression )[helper::make_left_assoc_binary_op_node_ptr( "&", $1 )]
         )
-)
 
-R( equality_expression, ast::expression_ptr,
-    t.relational_expression[helper::assign()]
+equality_expression:
+  | t.relational_expression
     >> *tagged(
           ( x3::lit( "==" ) >> t.relational_expression )[helper::make_left_assoc_binary_op_node_ptr( "==", $1 )]
         | ( x3::lit( "!=" ) >> t.relational_expression )[helper::make_left_assoc_binary_op_node_ptr( "!=", $1 )]
         )
-)
 
-R( relational_expression, ast::expression_ptr,
-    t.shift_expression[helper::assign()]
+relational_expression:
+  | t.shift_expression
     >> *tagged(
           ( x3::lit( "<=" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( "<=", $1 )]
         | ( x3::lit( "<" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( "<", $1 )]
         | ( x3::lit( ">=" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( ">=", $1 )]
         | ( x3::lit( ">" ) >> t.shift_expression )[helper::make_left_assoc_binary_op_node_ptr( ">", $1 )]
         )
-)
 
-R( shift_expression, ast::expression_ptr,
-    t.add_sub_expression[helper::assign()]
+shift_expression:
+  | add_sub_expression
     >> *tagged(
           ( x3::lit( "<<" ) >> t.add_sub_expression )[helper::make_left_assoc_binary_op_node_ptr( "<<", $1 )]
         | ( x3::lit( ">>" ) >> t.add_sub_expression )[helper::make_left_assoc_binary_op_node_ptr( ">>", $1 )]
         )
-)
 
-R( add_sub_expression, ast::expression_ptr,
-    t.mul_div_rem_expression[helper::assign()]
+add_sub_expression:
+  | mul_div_rem_expression
     >> *tagged(
           ( x3::lit( "+" ) >> t.mul_div_rem_expression )[helper::make_left_assoc_binary_op_node_ptr( "+", $1 )]
         | ( x3::lit( "-" ) >> t.mul_div_rem_expression )[helper::make_left_assoc_binary_op_node_ptr( "-", $1 )]
         )
-)
-
-
-R( mul_div_rem_expression, ast::expression_ptr,
-    t.unary_expression[helper::assign()]
+mul_div_rem_expression:
+  | unary_expression
     >> *tagged(
           ( x3::lit( "*" ) >> t.unary_expression )[helper::make_left_assoc_binary_op_node_ptr( "*", $1 )]
         | ( x3::lit( "/" ) >> t.unary_expression )[helper::make_left_assoc_binary_op_node_ptr( "/", $1 )]
         | ( x3::lit( "%" ) >> t.unary_expression )[helper::make_left_assoc_binary_op_node_ptr( "%", $1 )]
         )
-)
 
-R( unary_expression, ast::expression_ptr,
-    ( t.postfix_expression[helper::assign()]
+unary_expression:
+    | postfix_expression { $1 }
     | tagged(
         ( x3::lit( '-' ) >> t.unary_expression )[
             helper::make_unary_prefix_op_node_ptr( "-", $1 )
@@ -597,11 +516,10 @@ R( unary_expression, ast::expression_ptr,
         ( make_keyword( "new" ) >> t.unary_expression )[
             addressof_expression>( $1 )
             ])
-    )
-)
+    
 
-R( postfix_expression, ast::expression_ptr,
-    t.primary_expression[helper::assign()]
+postfix_expression:
+  | primary_expression
     >> *tagged(
             ( x3::lit( '.' ) >> t.identifier_value_set )[
                 helper::make_assoc_node_ptr<ast::element_selector_expression>( $1 )
@@ -613,56 +531,32 @@ R( postfix_expression, ast::expression_ptr,
                 helper::make_assoc_node_ptr<ast::call_expression>( $1 )
                 ]
        )
-)
 
-RN( primary_expression, ast::expression_ptr,
-    ( t.primary_value[
-        helper::fun(
-            []( auto&& val ) {
-                auto p = std::make_shared<ast::term_expression>(
-                    std::forward<decltype(val)>( val )
-                    );
-                p->value_->parent_expression = p;
-                return p;
-            },
-            $1
-            )
-        ]
-    | ( x3::lit( '(' ) >> t.expression >> x3::lit( ')' ) )[helper::assign()]
-    | t.lambda_expression[helper::assign()]
-    )
-)
+primary_expression:
+    | primary_value { $1 }
+    | LPAREN expression RPAREN { $2 }
+    | lambda_expression { $1 }
+    
 
 
-R( argument_list, ast::expression_list,
-    ( x3::lit( '(' ) >> x3::lit( ')' ) )
-    | ( x3::lit( '(' ) >> ( t.assign_expression % ',' ) >> x3::lit( ')' ) )
-)
+argument_list:
+  | LPAREN RPAREN { [] }
+  | LPAREN (assign_expression % ',') RPAREN { $2 }
 
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
-RN( lambda_expression, ast::lambda_expression_ptr,
-    ( t.lambda_introducer
-    > -t.template_parameter_variable_declaration_list
-    > t.parameter_variable_declaration_list
-    > t.decl_attribute_list
-    > -t.type_specifier
-    > t.function_body_statements_list_for_lambda
-    )[
-        lambda_expression>(
-            $1,
-            $2,
-            $3,
-            $4,
-            $5
-            )
-        ]
-)
+lambda_expression:
+  | lambda_introducer
+    -template_parameter_variable_declaration_list
+    parameter_variable_declaration_list
+    decl_attribute_list
+    -type_specifier
+    function_body_statements_list_for_lambda
+    { LambdaExpression($1, $2, $3, $4, $5) }
 
-R( lambda_introducer, x3::unused_type,
-    x3::lit( "\\" )
-)
+lambda_introducer:
+  | BACKBACK { () }
 
 /*
 t.parameter_variable_declaration_list
@@ -673,86 +567,62 @@ t.parameter_variable_declaration_list
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
-R( primary_value, ast::value_ptr,
-    ( t.boolean_literal
-    | t.identifier_value_set
-    | t.numeric_literal
-    | t.string_literal
-    | t.array_literal
-    )
-)
+primary_value:
+  | boolean_literal { $1 }
+  | identifier_value_set { $1 }
+  | numeric_literal { $1 }
+  | string_literal { $1 }
+  | array_literal { $1 }
 
 
 /* ==================================================================================================== */
-R( identifier_value_set, ast:: identifier_value_base_ptr,
-    t.template_instance_identifier | t.identifier
-)
+identifier_value_set:
+  | template_instance_identifier { $1 }
+  | identifier { $1 }
 
 
-R( identifier, ast::identifier_value_ptr,
-    t.identifier_from_root | t.identifier_relative
-)
+identifier:
+  | identifier_from_root { $1 }
+  | identifier_relative { $1 }
 
-RN( identifier_relative, ast::identifier_value_ptr,
-    t.identifier_sequence[
-        identifier_value>( $1, false )
-        ]
-)
+identifier_relative:
+  | identifier_sequence
+    { IdentifierValue($1, false) }
 
-RN( identifier_from_root, ast::identifier_value_ptr,
-    ( x3::lit( '.' ) >> t.identifier_sequence )[
-        identifier_value>( $1, true )
-        ]
-)
+identifier_from_root:
+  | DOT identifier_sequence
+    { IdentifierValue($1, true) }
 
 
-R( template_instance_identifier, ast::template_instance_value_ptr,
-    t.template_instance_identifier_from_root | t.template_instance_identifier_relative
-)
+template_instance_identifier:
+  | template_instance_identifier_from_root { $1 }
+  | template_instance_identifier_relative { $1 }
 
-RN( template_instance_identifier_relative, ast::template_instance_value_ptr,
-    ( t.identifier_sequence >> t.template_argument_list )[
-        template_instance_value>( $1, $2, false )
-        ]
-)
+template_instance_identifier_relative:
+  | identifier_sequence template_argument_list
+    { TemplateInstanceValue($1, $2, false) }
 
-RN( template_instance_identifier_from_root, ast::template_instance_value_ptr,
-    ( x3::lit( '.' ) >> t.identifier_sequence >> t.template_argument_list )[
-        template_instance_value>( $1, $2, true )
-        ]
-)
+template_instance_identifier_from_root:
+  | DOT identifier_sequence template_argument_list
+    { TemplateInstanceValue($1, $2, true) }
 
-R( template_argument_list, ast::expression_list,
-      ( x3::lit( '!' ) >> t.argument_list )[helper::assign()]
-    | ( x3::lit( '!' ) >> t.primary_expression )[
-        helper::fun(
-            []( auto&&... args ) {
-                return ast::expression_list{ std::forward<decltype(args)>( args )... };
-            },
-            $1
-            )
-        ]
-)
+template_argument_list:
+    | x3::lit( '!' ) argument_list { }
+    | x3::lit( '!' ) primary_expression { ExpressionList($2) }
 
 /* ==================================================================================================== */
-R( numeric_literal, ast::value_ptr,
-    ( t.float_literal
-    | t.integer_literal
-    )
-)
+numeric_literal:
+  | float_literal { $1 }
+  | integer_literal { $1 }
 
-RN( integer_literal, ast::intrinsic::int32_value_ptr,
-    x3::uint_[
-        intrinsic::int32_value>( $1 )
-        ]
-)
+integer_literal:
+  | x3::uint_
+    { Int32Value($1) }
 
 /* TODO: check range */
-RN( float_literal, ast::intrinsic::float_value_ptr,
-    t.fp_[
-        intrinsic::float_value>( $1 )
-        ]
-)
+float_literal:
+  | fp_
+    { FloatValue($1) }
 
 /* 1.0 */
 /* 1.e0 */
@@ -764,8 +634,8 @@ struct very_strict_fp_policies
 };
 x3::real_parser<long double, very_strict_fp_policies> const fp_;
 
-#if 0
 /* TODO: */
+/*
 fp <-
 ( fractional_constant >> -exponent_part>> -floating_suffix )
 | ( +digit_charset >> exponent_part >> -floating_suffix )
@@ -781,59 +651,47 @@ exponent_part <-
 
 floating_suffix <-
     lit('f') | 'l' | 'F' | 'L'
-#endif
+*/
 
 
 /* ==================================================================================================== */
-RN( boolean_literal, ast::intrinsic::boolean_value_ptr,
-    x3::bool_[
-        intrinsic::boolean_value>( $1 )
-        ]
-)
+boolean_literal:
+  | TRUE { true }
+  | FALSE { false }
 
 /* ==================================================================================================== */
-RN( array_literal, ast::intrinsic::array_value_ptr,
-    ( ( x3::lit( '[' ) >> x3::lit( ']' ) )[
+array_literal:
+    | ( x3::lit( '[' ) >> x3::lit( ']' ) )[
         intrinsic::array_value>()
         ] )
     | ( ( x3::lit( '[' ) >> ( t.assign_expression % ',' ) >> x3::lit( ']' ) )[
             intrinsic::array_value>( $1 )
             ] )
-)
 
 /* ==================================================================================================== */
-RN( string_literal, ast::intrinsic::string_value_ptr,
-    t.string_literal_sequence[
-        intrinsic::string_value>( $1 )
-        ]
-)
+string_literal:
+  | string_literal_sequence
+    { StringValue($1) }
 
-R( string_literal_sequence, std::string,
-    x3::lexeme[
+string_literal_sequence:
+  | x3::lexeme {
         x3::lit( '"' ) >> *( ( t.escape_sequence | x3::char_ ) - x3::lit( '"' ) ) >> x3::lit( '"' )
-        ]
-)
+    }
 
-// TODO: support some escape sequences
-R( escape_sequence, char,
-    x3::lit( "\\n" )[helper::construct<char>( '\n' )]
-)
+/* TODO: support some escape sequences */
+escape_sequence:
+  | x3::lit( "\\n" ) { helper::construct<char>( '\n' )}
 
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
-R( identifier_sequence, std::string,
-    ( t.operator_identifier_sequence
-    | t.normal_identifier_sequence
-    )
-)
+identifier_sequence:
+  | operator_identifier_sequence { $1 }
+  | normal_identifier_sequence { $1 }
 
-R( operator_identifier_sequence, std::string,
-    make_keyword( "op" )[helper::construct<std::string>( "%op_" )]
-    > -( make_keyword( "pre" )[helper::append( "pre_" )]
-       | make_keyword( "post" )[helper::append( "post_" )]
-       )
-    > ( x3::lit( "==" )[helper::append( "==" )]
+operator_identifier_sequence:
+  | OP pre_or_post_or_empty 
+      ( x3::lit( "==" )[helper::append( "==" )]
       | x3::lit( "!=" )[helper::append( "!=" )]
       | x3::lit( "||" )[helper::append( "||" )]
       | x3::lit( "&&" )[helper::append( "&&" )]
@@ -854,26 +712,25 @@ R( operator_identifier_sequence, std::string,
       | x3::lit( "<" )[helper::append( "<" )]
       | x3::lit( ">" )[helper::append( ">" )]
       | x3::lit( "=" )[helper::append( "=" )]
-      )
-)
+      ) { }
 
-R( normal_identifier_sequence, std::string,
-    x3::lexeme[
-        ( t.nondigit_charset )
-        >> *( t.nondigit_charset
-            | t.digit_charset
+pre_or_post_or_empty:
+  | PRE { "pre" }
+  | POST { "post" }
+  | { "" }
+
+normal_identifier_sequence:
+  | x3::lexeme[
+        nondigit_charset
+        >> *( nondigit_charset
+            | digit_charset
             )
         ]
-)
 
-R( nondigit_charset, char,
-      range( 'A', 'Z' )
+nondigit_charset:
+    | range( 'A', 'Z' )
     | range( 'a', 'z' )
     | x3::char_( '_' )
-    )
 
-R( digit_charset, char,
-    range( '0', '9' )
-    )
-
-*/
+digit_charset:
+  | range( '0', '9' )
