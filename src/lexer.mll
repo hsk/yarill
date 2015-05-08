@@ -65,6 +65,7 @@ rule token = parse
     { STRING(Lexing.lexeme lexbuf) }
 | ['a'-'z' 'A'-'Z' '_']['a'-'z' 'A'-'Z' '_' '0'-'9']*
     { ID(Lexing.lexeme lexbuf) }
+| '!' { NOT }
 | eof
     { EOF }
 | _

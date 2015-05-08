@@ -1,83 +1,11 @@
 %{
 open Ast
-%}
 
-%token <int> INT
-%token <string> ID
-%token DEF VAL
-%token SEMI
-%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
-%token COLON COMMA
-%token EQ
-%token RETURN
-%token EOF
-%token ADD SUB
-%token MUL DIV
-%token ARROW
-%token ONLYMETA
-%token META
-%token INTRINSIC
-%token OVERRIDE
-%token CLASS
-%left ADD SUB
-%left MUL DIV
+(*
+/* code grammar */
 
-%type <Ast.s list> decls
-%start decls
-
-%%
-
-decls:
-| decl { [$1] }
-| decl decls { $1 :: $2 }
-
-decl:
-| DEF ID LPAREN RPAREN COLON TYPE LBRACE stms RBRACE
-    { DFun($2, [], $6, $8) }
-
-simple_exp:
-| LPAREN exp RPAREN { $2 }
-| INT { EInt($1) }
-| STRING { EString($1) }
-| ID { EVar($1)}
-
-stms:
-| { [] }
-| stm stms { $1::$2 }
-
-stm:
-| VAL ID EQ LBRACK lists RBRACK SEMI {  } 
-exps:
-| exp { [$1] }
-| exp exps { $1::$2 }
-
-exp:
-| simple_exp { $1 }
-
-
-/*
-template<typename L>
-auto make_keyword( L&& literal )
-{
-    return x3::lexeme[
-        x3::lit( std::forward<L>( literal ) )
-        >> !( range( 'A', 'Z' )
-            | range( 'a', 'z' )
-            | x3::char_( '_' )
-            | range( '0', '9' )
-            )
-        ];
-}
-
-template<typename L>
-decltype(auto) tagged( L&& rule )
-{
-    return x3::raw[std::forward<L>( rule )][helper::tagging()];
-}
-*/
-            /* code grammar */
-
-program: module eof { $1 }
+program:
+  | module eof { $1 }
 
 module:
   | top_level_statements { $1 }
@@ -89,26 +17,26 @@ top_level_statements:
 top_level_statement :
   | function_definition_statement { $1 }
   | class_definition_statement { $1 }
-  | extern_statement  { $1 }
-  | import_statement  { $1 }
-  | empty_statement  { $1 }
-  | expression_statement  { $1 }   /* this rule must be located at last */
+  | extern_statement { $1 }
+  | import_statement { $1 }
+  | empty_statement { $1 }
+  | expression_statement { $1 (* this rule must be located at last *) }
 
 function_definition_statement:
   | DEF identifier_relative
-      -template_parameter_variable_declaration_list
-      parameter_variable_declaration_list
-      decl_attribute_list
-      -type_specifier
-      function_body_block
-      { Function_definition_statement($3, $2, $4, $5, $6, $7) }
+    -template_parameter_variable_declaration_list
+    parameter_variable_declaration_list
+    decl_attribute_list
+    -type_specifier
+    function_body_block
+    { Function_definition_statement($3, $2, $4, $5, $6, $7) }
 
 function_body_statements_list:
-  | LBRACE program_body_statements_list RBRACE { $2 }
+  | LBRACE program_body_statements RBRACE { $2 }
   | function_online_body_for_normal { $1 }
 
 function_body_statements_list_for_lambda:
-  | LBRACE program_body_statements_list RBRACE { $2 }
+  | LBRACE program_body_statements RBRACE { $2 }
   | function_online_body_for_lambda { $1 }
 
 function_online_body_for_normal:
@@ -129,16 +57,12 @@ program_body_statement:
   | empty_statement { $1 }
   | expression_statement { $1 }   /* NOTE: this statement must be set at last */
 
-program_body_statements_list:
-  | *program_body_statement { $1 }
-
 program_body_statements:
-  | program_body_statements_list { $1 }
-
+  | { [] }
+  | program_body_statement program_body_statements { $1::$2 }
 
 block_statement:
   | LBRACE program_body_statements RBRACE { $1 }
-
 
 /* ==================================================================================================== */
 parameter_variable_holder_kind_specifier:
@@ -320,8 +244,8 @@ template_parameter_variable_initializer_unit:
 
 
 template_parameter_variable_declaration_list:
-  | x3::lit( '!' ) LPAREN RPAREN  { }
-  | x3::lit( '!' ) LPAREN (template_parameter_variable_declaration % COMMA) RPAREN { }
+  | NOT LPAREN RPAREN  { }
+  | NOT LPAREN (template_parameter_variable_declaration % COMMA) RPAREN { }
 
 
 /* ==================================================================================================== */
@@ -502,6 +426,36 @@ parameter_variable_declaration_list
     > -type_specifier
     > function_body_block
 */
+  *)
+%}
+
+%token <int> INT
+%token <string> ID
+%token DEF VAL
+%token SEMI
+%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
+%token COLON COMMA
+%token EQ
+%token RETURN
+%token EOF
+%token ADD SUB
+%token MUL DIV
+%token ARROW
+%token ONLYMETA
+%token META
+%token INTRINSIC
+%token OVERRIDE
+%token CLASS
+%left ADD SUB
+%left MUL DIV
+
+%type <Ast.e> primary_value
+%start primary_value
+
+%%
+
+
+
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -540,8 +494,8 @@ template_instance_identifier_from_root:
     { TemplateInstanceValue($1, $2, true) }
 
 template_argument_list:
-  | x3::lit( '!' ) argument_list { }
-  | x3::lit( '!' ) primary_expression { ExpressionList($2) }
+  | NOT argument_list { }
+  | NOT primary_expression { ExpressionList($2) }
 
 /* ==================================================================================================== */
 numeric_literal:
@@ -549,11 +503,11 @@ numeric_literal:
   | integer_literal { $1 }
 
 integer_literal:
-  | x3::uint_ { Int32Value($1) }
+  | INT { Int32Value($1) }
 
 /* TODO: check range */
 float_literal:
-  | fp_ { FloatValue($1) }
+  | FLOAT { FloatValue($1) }
 
 /* TODO: */
 /*
@@ -634,6 +588,7 @@ pre_or_post_or_empty:
   | POST { "post" }
   | { "" }
 
+/*
 normal_identifier_sequence:
   | x3::lexeme[
         nondigit_charset
@@ -649,3 +604,4 @@ nondigit_charset:
 
 digit_charset:
   | range( '0', '9' )
+*/
