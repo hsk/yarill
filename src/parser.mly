@@ -561,47 +561,29 @@ identifier_sequence:
   | normal_identifier_sequence { $1 }
 
 operator_identifier_sequence:
-  | OP pre_or_post_or_empty EQEQ { append("==") }
-  | OP pre_or_post_or_empty NE { append("!=") }
-  | OP pre_or_post_or_empty BARBAR { append("||") }
-  | OP pre_or_post_or_empty AMPAMP { append("&&") }
-  | OP pre_or_post_or_empty LE { append("<=") }
-  | OP pre_or_post_or_empty GE { append(">=") }
-  | OP pre_or_post_or_empty LSHIFT { append("<<") }
-  | OP pre_or_post_or_empty RSHIFT { append(">>") }
-  | OP pre_or_post_or_empty LPAREN RPAREN { append("()") }
-  | OP pre_or_post_or_empty LBRACK RBRACK { append("[]") }
-  | OP pre_or_post_or_empty BAR { append("|") }
-  | OP pre_or_post_or_empty XOR { append("^") }
-  | OP pre_or_post_or_empty AMP { append("&") }
-  | OP pre_or_post_or_empty ADD { append("+") }
-  | OP pre_or_post_or_empty SUB { append("-") }
-  | OP pre_or_post_or_empty MUL { append("*") }
-  | OP pre_or_post_or_empty DIV { append("/") }
-  | OP pre_or_post_or_empty REM { append("%") }
-  | OP pre_or_post_or_empty LT { append("<") }
-  | OP pre_or_post_or_empty GT { append(">") }
-  | OP pre_or_post_or_empty EQ { append("=") }
+  | OP op_assoc EQEQ { append("==") }
+  | OP op_assoc NE { append("!=") }
+  | OP op_assoc BARBAR { append("||") }
+  | OP op_assoc AMPAMP { append("&&") }
+  | OP op_assoc LE { append("<=") }
+  | OP op_assoc GE { append(">=") }
+  | OP op_assoc LSHIFT { append("<<") }
+  | OP op_assoc RSHIFT { append(">>") }
+  | OP op_assoc LPAREN RPAREN { append("()") }
+  | OP op_assoc LBRACK RBRACK { append("[]") }
+  | OP op_assoc BAR { append("|") }
+  | OP op_assoc XOR { append("^") }
+  | OP op_assoc AMP { append("&") }
+  | OP op_assoc ADD { append("+") }
+  | OP op_assoc SUB { append("-") }
+  | OP op_assoc MUL { append("*") }
+  | OP op_assoc DIV { append("/") }
+  | OP op_assoc REM { append("%") }
+  | OP op_assoc LT { append("<") }
+  | OP op_assoc GT { append(">") }
+  | OP op_assoc EQ { append("=") }
 
-pre_or_post_or_empty:
+op_assoc:
   | PRE { "pre" }
   | POST { "post" }
   | { "" }
-
-/*
-normal_identifier_sequence:
-  | x3::lexeme[
-        nondigit_charset
-        >> *( nondigit_charset
-            | digit_charset
-            )
-        ]
-
-nondigit_charset:
-    | range( 'A', 'Z' )
-    | range( 'a', 'z' )
-    | x3::char_( '_' )
-
-digit_charset:
-  | range( '0', '9' )
-*/
