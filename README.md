@@ -133,20 +133,112 @@ string_literal ::= string_literal_sequence
 | \DDD     | 文字DDDはASCIIコードの8進数 |
 | \x HH    | 文字HHはASCIIコードの16進数 |
 
+
+## Context-free Syntax
+
+## プライマリ値 Primary value
+
+```
+primary_value:
+  | boolean_literal { $1 }
+  | identifier_value_set { $1 }
+  | numeric_literal { $1 }
+  | string_literal { $1 }
+  | array_literal { $1 }
+```
+
 ### ブーリアンリテラル
+
+ブーリアンリテラルはtrue又はfalseを記述します。
 
 ```
 boolean_literal ::= "true" | "false"
 ```
 
-## Context-free Syntax
+### 配列リテラル
 
-### リテラル literals
+配列リテラルを使う事で、配列の初期化を行う事が出来ます。
 
 ```
 array_literal ::= '[' [assign_expression % ','] ']'
+```
+
+### 数値リテラル
+
+数値を表すリテラルは、浮動小数点リテラルと整数リテラルがあります。
+
+```
 numeric_literal ::= float_literal | integer_literal
 ```
+
+## 式 Expression
+
+```
+expression ::= assign_expression
+```
+
+## 二項演算子式
+
+```
+commma_expression ::= assign_expression
+  | assign_expression { ',' comma_expression }
+
+assign_expression ::= conditional_expression { '=' conditional_expression }
+
+conditional_expression ::= logical_or_expression
+    /* TODO: add conditional operator( ? : ) */
+
+logical_or_expression ::= logical_and_expression { "||" logical_and_expression }
+logical_and_expression ::= bitwise_or_expression { "&&" bitwise_or_expression }
+bitwise_or_expression ::= bitwise_xor_expression { "|" bitwise_xor_expression }
+bitwise_xor_expression ::= bitwise_and_expression { '^' bitwise_and_expression }
+bitwise_and_expression ::= equality_expression { '&' equality_expression }
+equality_expression ::= relational_expression { ("==" | "!=") relational_expression }
+relational_expression ::= shift_expression { ("<=" | "<" | ">=" | ">") shift_expression }
+shift_expression ::= add_sub_expression { ("<<" | ">>") add_sub_expression }
+
+add_sub_expression ::= mul_div_rem_expression { '+' mul_div_rem_expression }
+                     | unary_expression { '-' mul_div_rem_expression }
+mul_div_rem_expression ::= unary_expression { ('*' | '/' | '%') unary_expression }
+```
+
+## 前置演算子式
+
+```
+unary_expression ::= postfix_expression
+  | { '-' | '+' | '*' | '&' | "new" } unary_expression
+```
+
+## 後置演算子式
+
+```
+postfix_expression ::= primary_expression
+  | primary_expression { '.' identifier_value_set }
+  | primary_expression '[' [ expression ] ']'
+  | primary_expression argument_list
+
+argument_list ::= | '(' ')' | '(' [ assign_expression { ',' assign_expression } ] ')'
+```
+
+## プライマリ式
+
+```
+primary_expression ::= primary_value | '(' expression ')' | lambda_expression
+```
+
+## ラムダ式
+
+```
+lambda_expression ::= lambda_introducer
+    [template_parameter_variable_declaration_list]
+    parameter_variable_declaration_list
+    decl_attribute_list
+    [type_specifier]
+    function_body_statements_list_for_lambda
+
+lambda_introducer ::= '\'
+```
+
 
 ## reference
 
