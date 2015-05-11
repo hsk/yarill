@@ -239,6 +239,48 @@ lambda_expression ::= lambda_introducer
 lambda_introducer ::= '\'
 ```
 
+## 文 Statements
+
+文鳥言語には文鳥なだけに文が沢山あります。
+よくあるプログラミング言語の文は文鳥言語ではプログラム本体文(program body statement)といいます。
+
+### プログラム本体文 program body statement
+
+```
+/* executable scope, such as function, block, lambda, ... */
+program_body_statement:
+  | block_statement { $1 }
+  | variable_declaration_statement { $1 }
+  | control_flow_statement { $1 }
+  | return_statement { $1 }
+  | empty_statement { $1 }
+  | expression_statement { $1 }   /* NOTE: this statement must be set at last */
+```
+
+### ブロック文 block statement
+
+ブロック分はプログラム本体文を複数まとめて記述したものです。
+
+```
+block_statement ::= '{' program_body_statements '}'
+program_body_statements ::= { program_body_statement }
+```
+
+### 値宣言文 variable declaration statement
+
+値宣言文 variable declaration statement は値の宣言を行います。
+値を宣言する際には、valまたはrefを使って保存する種別を指定します。
+
+```
+variable_declaration_statement ::= variable_declaration statement_termination
+
+variable_holder_kind_specifier ::= "val" | "ref"
+
+variable_declaration ::= variable_holder_kind_specifier variable_initializer_unit
+
+variable_initializer_unit ::= identifier_relative decl_attribute_list value_initializer_unit 
+```
+
 
 ## reference
 
