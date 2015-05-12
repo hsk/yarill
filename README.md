@@ -345,6 +345,22 @@ empty_statement ::= statement_termination
 expression_statement ::= expression statement_termination
 ```
 
+## テンプレートパラメータ値宣言 template parameter variable declaration
+
+```
+template_parameter_variable_declaration ::=
+    template_parameter_variable_initializer_unit
+
+template_parameter_variable_initializer_unit ::=
+    identifier_relative [ value_initializer_unit ]
+
+template_parameter_variable_declaration_list ::=
+      '!' '(' ')'
+    | '!' '(' template_parameter_variable_declaration
+              { ','  template_parameter_variable_declaration }
+          ')'
+```
+
 ## トップレベル文 top level statement
 
 ```
