@@ -248,13 +248,13 @@ lambda_introducer ::= '\'
 
 ```
 /* executable scope, such as function, block, lambda, ... */
-program_body_statement:
-  | block_statement { $1 }
-  | variable_declaration_statement { $1 }
-  | control_flow_statement { $1 }
-  | return_statement { $1 }
-  | empty_statement { $1 }
-  | expression_statement { $1 }   /* NOTE: this statement must be set at last */
+program_body_statement::=
+    block_statement
+  | variable_declaration_statement
+  | control_flow_statement
+  | return_statement
+  | empty_statement
+  | expression_statement /* NOTE: this statement must be set at last */
 ```
 
 ### ブロック文 block statement
@@ -283,7 +283,7 @@ variable_initializer_unit ::= identifier_relative decl_attribute_list value_init
 
 ### コントロールフロー文 control flow statement
 
-コントロールフロー文には while 文と if 文があります。
+コントロールフロー文には `while` 文と `if` 文があります。
 
 ```
 control_flow_statement ::= while_statement | if_statement
@@ -291,8 +291,8 @@ control_flow_statement ::= while_statement | if_statement
 
 #### while 文 while statement
 
-while文は `expression` の評価した値が `true` なら `program_body_statement` を評価し、再度 `expression`を実行し`false`になるまで続けます。
-最初の`expression`の評価値が`true`なら`program_body_statement`は実行しません。
+while文は `expression` の評価した値が `true` なら `program_body_statement` を評価し、再度 `expression`を評価します。
+`expression`の評価値が`false`なら`program_body_statement`を評価しません。
 `break`, `continue` はありません。
 
 ```
@@ -301,11 +301,37 @@ while_statement ::= "while" '(' expression ')' program_body_statement
 
 #### if 文 if statement
 
-if文はよくあるC言語と同様です。
+`if` 文はよくあるC言語と同様です。 `expression` を評価し`true`なら`program_body_statement`を評価し`false`なら何もしません。`if` `else`文は`expression`を評価し`true`なら`else`の手前の`program_body_statement`を評価し、`false`なら `else`の後ろの`program_body_statement`を評価します。
+`if` `else` 文は連続して記述する事が出来ます。
 
 ```
 if_statement ::= "if" '(' expression ')' program_body_statement
              |   "if" '(' expression ')' program_body_statement "else" program_body_statement
+```
+
+### return 文 return statement
+
+return文は関数から値を返します。
+
+```
+statement_termination ::= ';'
+return_statement ::= "return" expression statement_termination
+```
+
+### empty 文 empty statement
+
+empty文は';'だけを記述した物で何も行いません。
+
+```
+empty_statement ::= statement_termination
+```
+
+### 式文 expression statement
+
+式文は式の評価のみ行います。
+
+```
+expression_statement ::= expression statement_termination
 ```
 
 ## reference
