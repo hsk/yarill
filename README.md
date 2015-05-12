@@ -281,6 +281,32 @@ variable_declaration ::= variable_holder_kind_specifier variable_initializer_uni
 variable_initializer_unit ::= identifier_relative decl_attribute_list value_initializer_unit 
 ```
 
+### コントロールフロー文 control flow statement
+
+コントロールフロー文には while 文と if 文があります。
+
+```
+control_flow_statement ::= while_statement | if_statement
+```
+
+#### while 文 while statement
+
+while文は `expression` の評価した値が `true` なら `program_body_statement` を評価し、再度 `expression`を実行し`false`になるまで続けます。
+最初の`expression`の評価値が`true`なら`program_body_statement`は実行しません。
+`break`, `continue` はありません。
+
+```
+while_statement ::= "while" '(' expression ')' program_body_statement
+```
+
+#### if 文 if statement
+
+if文はよくあるC言語と同様です。
+
+```
+if_statement ::= "if" '(' expression ')' program_body_statement
+             |   "if" '(' expression ')' program_body_statement "else" program_body_statement
+```
 
 ## reference
 
