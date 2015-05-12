@@ -136,15 +136,26 @@ string_literal ::= string_literal_sequence
 
 ## Context-free Syntax
 
+
+## 型スペシファイア type specifier
+
+```
+type_specifier ::= ':' id_expression
+
+decl_attribute ::= "onlymeta" | "meta" | "intrinsic" | "override"
+
+decl_attribute_list ::= decl_attribute { ',' decl_attribute } | x3::eps
+```
+
 ## プライマリ値 Primary value
 
 ```
-primary_value:
-  | boolean_literal { $1 }
-  | identifier_value_set { $1 }
-  | numeric_literal { $1 }
-  | string_literal { $1 }
-  | array_literal { $1 }
+primary_value ::=
+    boolean_literal
+  | identifier_value_set
+  | numeric_literal
+  | string_literal
+  | array_literal
 ```
 
 ### ブーリアンリテラル
@@ -230,10 +241,10 @@ primary_expression ::= primary_value | '(' expression ')' | lambda_expression
 
 ```
 lambda_expression ::= lambda_introducer
-    [template_parameter_variable_declaration_list]
+    [ template_parameter_variable_declaration_list ]
     parameter_variable_declaration_list
     decl_attribute_list
-    [type_specifier]
+    [ type_specifier ]
     function_body_statements_list_for_lambda
 
 lambda_introducer ::= '\'
@@ -248,7 +259,7 @@ lambda_introducer ::= '\'
 
 ```
 /* executable scope, such as function, block, lambda, ... */
-program_body_statement::=
+program_body_statement ::=
     block_statement
   | variable_declaration_statement
   | control_flow_statement
@@ -320,7 +331,7 @@ return_statement ::= "return" expression statement_termination
 
 ### empty 文 empty statement
 
-empty文は';'だけを記述した物で何も行いません。
+empty文は ';' だけを記述した物で何も行いません。
 
 ```
 empty_statement ::= statement_termination
@@ -332,6 +343,160 @@ empty_statement ::= statement_termination
 
 ```
 expression_statement ::= expression statement_termination
+```
+
+## トップレベル文 top level statement
+
+```
+top_level_statement ::=
+    function_definition_statement
+  | class_definition_statement
+  | extern_statement
+  | import_statement
+  | empty_statement
+  | expression_statement /* this rule must be located at last */
+```
+
+トップレベルではトップレベル文シーケンス中の最後にのみ式の記述が出来ます。
+
+## 関数定義文 function definition statement
+
+```
+function_definition_statement ::=
+    "def" identifier_relative
+    [ template_parameter_variable_declaration_list ]
+    parameter_variable_declaration_list
+    decl_attribute_list
+    [ type_specifier ]
+    function_body_block
+
+function_body_statements_list ::=
+    '{' program_body_statements '}'
+  | function_online_body_for_normal
+
+function_body_statements_list_for_lambda ::=
+    '{' program_body_statements '}'
+  | function_online_body_for_lambda
+
+function_online_body_for_normal ::= "=>" expression statement_termination
+
+function_online_body_for_lambda ::= "=>" expression
+
+function_body_block ::= function_body_statements_list
+```
+
+### extern文 extern statement
+
+```
+extern_statement ::=
+    "extern" extern_function_declaration_statement statement_termination
+  | "extern" extern_class_declaration_statement statement_termination
+
+extern_function_declaration_statement ::=
+    "def"
+    identifier_relative
+    [ template_parameter_variable_declaration_list ]
+    parameter_variable_declaration_list
+    extern_decl_attribute_list
+    type_specifier
+    string_literal_sequence
+
+extern_class_declaration_statement ::=
+    "class"
+    identifier_relative
+    [ template_parameter_variable_declaration_list ]
+    extern_decl_attribute_list
+    string_literal_sequence
+
+extern_decl_attribute_list ::= decl_attribute_list
+```
+
+### import文 import statement
+
+```
+import_statement ::=
+    "import" import_decl_unit_list statement_termination
+
+import_decl_unit ::= normal_identifier_sequence
+
+import_decl_unit_list ::= import_decl_unit { ',' import_decl_unit }
+```
+
+### クラス定義文 class definition statement
+
+```
+class_definition_statement ::=
+    "class"
+    identifier_relative
+    [ template_parameter_variable_declaration_list ]
+    [ base_class_type ]
+    [ mixin_traits_list ]
+    decl_attribute_list
+    class_body_block
+
+base_class_type ::= '>' id_expression
+
+mixin_traits_list ::= '[' [ id_expression { ',' id_expression } ] ']'
+
+class_body_block ::= '{' class_body_statements '}'
+```
+
+#### クラス本体文 class body statement
+
+```
+class_body_statement ::=
+    class_virtual_function_definition_statement
+  | class_function_definition_statement
+  | class_variable_declaration_statement
+  | empty_statement
+
+class_body_statements ::= { class_body_statement }
+
+class_function_definition_statement ::=
+    "def"
+    identifier_relative
+    [ template_parameter_variable_declaration_list ]
+    parameter_variable_declaration_list
+    decl_attribute_list
+    [ class_variable_initializers ]
+    [ type_specifier ]
+    function_body_block
+
+class_virtual_function_definition_statement ::=
+    "virtual" "def"
+    identifier_relative
+    parameter_variable_declaration_list
+    decl_attribute_list
+    type_specifier
+    function_body_block
+
+  | "virtual" "def"
+    identifier_relative
+    parameter_variable_declaration_list
+    decl_attribute_list
+    type_specifier
+    statement_termination
+
+  | "virtual" "def"
+    identifier_relative
+    parameter_variable_declaration_list
+    decl_attribute_list
+    function_body_block
+
+class_variable_initializers ::=
+    '|' /* work around to avoid this rule to be adapted to vector(pass type at random) */
+    class_variable_initializer_list
+
+
+class_variable_initializer_list ::=
+    class_variable_initializer_unit { ',' class_variable_initializer_unit }
+
+
+class_variable_initializer_unit ::=
+    identifier_relative value_initializer_unit_only_value
+
+class_variable_declaration_statement ::=
+    variable_declaration statement_termination
 ```
 
 ## reference
