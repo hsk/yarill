@@ -182,13 +182,13 @@ array_literal ::= '[' [assign_expression % ','] ']'
 numeric_literal ::= float_literal | integer_literal
 ```
 
-## 式 Expression
+## 式 expression
 
 ```
 expression ::= assign_expression
 ```
 
-## 二項演算子式
+### 二項演算子式 binary operator expression
 
 ```
 commma_expression ::= assign_expression
@@ -213,14 +213,14 @@ add_sub_expression ::= mul_div_rem_expression { '+' mul_div_rem_expression }
 mul_div_rem_expression ::= unary_expression { ('*' | '/' | '%') unary_expression }
 ```
 
-## 前置演算子式
+### 前置演算子式 unary expression
 
 ```
 unary_expression ::= postfix_expression
   | { '-' | '+' | '*' | '&' | "new" } unary_expression
 ```
 
-## 後置演算子式
+### 後置演算子式 postfix expression
 
 ```
 postfix_expression ::= primary_expression
@@ -231,13 +231,13 @@ postfix_expression ::= primary_expression
 argument_list ::= | '(' ')' | '(' [ assign_expression { ',' assign_expression } ] ')'
 ```
 
-## プライマリ式
+### プライマリ式 primary expression
 
 ```
 primary_expression ::= primary_value | '(' expression ')' | lambda_expression
 ```
 
-## ラムダ式
+### ラムダ式 lambda expression
 
 ```
 lambda_expression ::= lambda_introducer
@@ -250,7 +250,7 @@ lambda_expression ::= lambda_introducer
 lambda_introducer ::= '\'
 ```
 
-## 文 Statements
+## 文 statements
 
 文鳥言語には文鳥なだけに文が沢山あります。
 よくあるプログラミング言語の文は文鳥言語ではプログラム本体文(program body statement)といいます。
@@ -513,6 +513,16 @@ class_variable_initializer_unit ::=
 
 class_variable_declaration_statement ::=
     variable_declaration statement_termination
+```
+
+## プログラム program
+
+```
+program ::= module eof
+
+module ::= top_level_statements
+
+top_level_statements ::= { top_level_statement }
 ```
 
 ## reference
