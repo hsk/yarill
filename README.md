@@ -2,6 +2,8 @@
 
 Yarill is yet another rill programming language.
 
+今はまだ開発中です。
+
 ## install
 
     $ make
@@ -21,9 +23,9 @@ example/hello.rill
 ## 表記法 Notations
 
 言語の構文はBNFのような記法で記述されています。終端記号はセミコロン''あるいはダブルクォーテーション""で括ってあります。非終端記号は小文字から始まる識別子によって記述します。
-角カッコ`[…]`は、省略可能である事を示しています。
-中括弧`{…}`は、囲まれた部分が0回以上の繰り返しを表します。プラスの記号+は1回以上の繰り返しを意味します。
-括弧`(…)`はグループ表します。
+角カッコ `[…]` は、省略可能である事を示しています。
+中括弧 `{…}` は、囲まれた部分が0回以上の繰り返しを表します。プラスの記号 `+` は1回以上の繰り返しを意味します。
+括弧 `(…)` はグループ表します。
 
 
 ## 字句解析 Lexical Conventions
@@ -33,7 +35,7 @@ example/hello.rill
 
 ### 空白
 
-スペース' ' 、改行'\n'、水平タブ'\n'、キャリッジリターン'\r'、ラインフィード、フォーム·フィードの文字はブランクです。
+スペース' '、改行'\n'、水平タブ'\n'、キャリッジリターン'\r'、ラインフィード、フォーム·フィードの文字はブランクです。
 ブランクは無視されますが、それらは隣接する識別子、リテラルおよびそれ以外の場合は、単一の識別子、リテラルまたはキーワードとして混同されることになるキーワードを区切ります。
 
 ### コメント
@@ -74,7 +76,7 @@ Rillの識別子は、演算子識別子と普通識別子の２種類から成�
 整数リテラルは、必要に応じてマイナス符号が前についた、一つ以上の数字の列です。
 デフォルトでは、整数リテラルは基数10の整数です。次の接頭辞で異なる基数を選択出来ます。
 
-| 接頭辞  | 基数          |
+| 接頭辞 | 基数          |
 | ------ | ------------ |
 | 0x, 0X | 16進数(基数16) |
 | 0o, 0O |  8進数 (基数8) |
@@ -84,19 +86,21 @@ Rillの識別子は、演算子識別子と普通識別子の２種類から成�
 利便性と可読性のために、文字(アンダースコア '_' を)整数リテラル内に記述する事が出来ます。アンダースコアは無視されます。
 
 ```
-integer_literal ::= [ '-' ]（'0' … '9'）{  '0' … '9' |  '_'  }  
-  | [ '-' ] (0x | 0X) ('0' … '9' | 'A' … 'F' | 'a' … 'f'){ '0' … '9' | 'A' … 'F' | 'a' … 'a' |  '_' }
-  | [ '-' ] ("0o" | "0O") ('0' … '7'){ '0' … '7' | '_' }  
-  | [ '-' ] ("0b" | "0B") ('0' … '1'){ '0' … '1' | '_' }
+integer_literal ::=
+    [ '-' ]（'0' … '9'）{  '0' … '9' |  '_'  }  
+  | [ '-' ] (0x | 0X) ('0' … '9' | 'A' … 'F' | 'a' … 'f') { '0' … '9' | 'A' … 'F' | 'a' … 'a' |  '_' }
+  | [ '-' ] ("0o" | "0O") ('0' … '7') { '0' … '7' | '_' }  
+  | [ '-' ] ("0b" | "0B") ('0' … '1') { '0' … '1' | '_' }
 ```
 
 ### 浮動小数点数リテラル
 
 ```
-float_literal ::= digit_charset+ '.' digit_charset+ [exponent_part] [float_type]
-               |  '.' digit_charset+ [exponent_part] [float_type]
-               |  digit_charset+ [exponent_part] [float_type]
-               |  digit_charset+ [exponent_part] float_type
+float_literal ::=
+    digit_charset+ '.' digit_charset+ [exponent_part] [float_type]
+  | '.' digit_charset+ [exponent_part] [float_type]
+  | digit_charset+ [exponent_part] [float_type]
+  | digit_charset+ [exponent_part] float_type
 sign ::= '+' | '-'
 exponent_part ::= ('e' | 'E') [sign] digit_charset+
 floating_suffix ::= 'f' | 'l' | 'F' | 'L'
@@ -171,7 +175,7 @@ boolean_literal ::= "true" | "false"
 配列リテラルを使う事で、配列の初期化を行う事が出来ます。
 
 ```
-array_literal ::= '[' [assign_expression % ','] ']'
+array_literal ::= '[' assign_expression { ',' assign_expression } ']'
 ```
 
 ### 数値リテラル
@@ -191,7 +195,8 @@ expression ::= assign_expression
 ### 二項演算子式 binary operator expression
 
 ```
-commma_expression ::= assign_expression
+commma_expression ::=
+    assign_expression
   | assign_expression { ',' comma_expression }
 
 assign_expression ::= conditional_expression { '=' conditional_expression }
@@ -208,8 +213,9 @@ equality_expression ::= relational_expression { ("==" | "!=") relational_express
 relational_expression ::= shift_expression { ("<=" | "<" | ">=" | ">") shift_expression }
 shift_expression ::= add_sub_expression { ("<<" | ">>") add_sub_expression }
 
-add_sub_expression ::= mul_div_rem_expression { '+' mul_div_rem_expression }
-                     | unary_expression { '-' mul_div_rem_expression }
+add_sub_expression ::=
+	mul_div_rem_expression { '+' mul_div_rem_expression }
+  | unary_expression { '-' mul_div_rem_expression }
 mul_div_rem_expression ::= unary_expression { ('*' | '/' | '%') unary_expression }
 ```
 
@@ -280,7 +286,7 @@ program_body_statements ::= { program_body_statement }
 ### 値宣言文 variable declaration statement
 
 値宣言文 variable declaration statement は値の宣言を行います。
-値を宣言する際には、valまたはrefを使って保存する種別を指定します。
+値を宣言する際には、 `val` または `ref` を使って保存する種別を指定します。
 
 ```
 variable_declaration_statement ::= variable_declaration statement_termination
@@ -303,8 +309,8 @@ control_flow_statement ::= while_statement | if_statement
 #### while 文 while statement
 
 while文は `expression` の評価した値が `true` なら `program_body_statement` を評価し、再度 `expression`を評価します。
-`expression`の評価値が`false`なら`program_body_statement`を評価しません。
-`break`, `continue` はありません。
+`expression` の評価値が `false` なら `program_body_statement` を評価しません。
+`break` , `continue` はありません。
 
 ```
 while_statement ::= "while" '(' expression ')' program_body_statement
@@ -312,17 +318,18 @@ while_statement ::= "while" '(' expression ')' program_body_statement
 
 #### if 文 if statement
 
-`if` 文はよくあるC言語と同様です。 `expression` を評価し`true`なら`program_body_statement`を評価し`false`なら何もしません。`if` `else`文は`expression`を評価し`true`なら`else`の手前の`program_body_statement`を評価し、`false`なら `else`の後ろの`program_body_statement`を評価します。
+`if` 文はよくあるC言語と同様です。 `expression` を評価し `true` なら `program_body_statement` を評価し `false` なら何もしません。`if` `else` 文は `expression` を評価し `true` なら `else` の手前の `program_body_statement` を評価し、 `false` なら `else` の後ろの `program_body_statement` を評価します。
 `if` `else` 文は連続して記述する事が出来ます。
 
 ```
-if_statement ::= "if" '(' expression ')' program_body_statement
-             |   "if" '(' expression ')' program_body_statement "else" program_body_statement
+if_statement ::=
+	"if" '(' expression ')' program_body_statement
+  | "if" '(' expression ')' program_body_statement "else" program_body_statement
 ```
 
 ### return 文 return statement
 
-return文は関数から値を返します。
+`return` 文は関数から値を返します。
 
 ```
 statement_termination ::= ';'
@@ -331,7 +338,7 @@ return_statement ::= "return" expression statement_termination
 
 ### empty 文 empty statement
 
-empty文は ';' だけを記述した物で何も行いません。
+`empty` 文は ';' だけを記述した物で何も行いません。
 
 ```
 empty_statement ::= statement_termination
@@ -355,10 +362,10 @@ template_parameter_variable_initializer_unit ::=
     identifier_relative [ value_initializer_unit ]
 
 template_parameter_variable_declaration_list ::=
-      '!' '(' ')'
-    | '!' '(' template_parameter_variable_declaration
-              { ','  template_parameter_variable_declaration }
-          ')'
+    '!' '(' ')'
+  | '!' '(' template_parameter_variable_declaration
+            { ','  template_parameter_variable_declaration }
+        ')'
 ```
 
 ## トップレベル文 top level statement
@@ -525,7 +532,7 @@ module ::= top_level_statements
 top_level_statements ::= { top_level_statement }
 ```
 
-## reference
+## 参考URL reference
 
 * http://askra.de/software/ocaml-doc/3.12/full-grammar.html
 * http://scala-lang.org/files/archive/spec/2.11/13-syntax-summary.html
