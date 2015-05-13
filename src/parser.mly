@@ -473,8 +473,6 @@ numeric_literal:
   | float_literal { $1 }
   | integer_literal { $1 }
 
-integer_literal:
-  | INT { Int32Value($1) }
 
 /* TODO: check range */
 float_literal:
@@ -526,6 +524,7 @@ escape_sequence:
 %}
 
 %token <string> NORMAL_IDENTFIRE_SEQUENCE
+%token <int> INTEGER_LITERAL
 %token OP PRE POST
 %token EQ NE LOR LAND LE GE LSHIFT RSHIFT
 %token LPAREN RPAREN LBRACKET RBRACKET
@@ -533,6 +532,8 @@ escape_sequence:
 %token EOF
 %type <string> identifier_sequence
 %start identifier_sequence
+%type <int> integer_literal
+%start integer_literal
 
 %%
 
@@ -573,3 +574,5 @@ op_assoc:
   | POST { "post_" }
   | { "" }
 
+integer_literal:
+  | INTEGER_LITERAL { $1 }

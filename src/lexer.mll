@@ -3,7 +3,10 @@ open Parser
 }
 
 let digit_charset = ['0' - '9']
-let nondigit_charset = ['A' - 'Z' 'a'-'z' '_']
+let hex_charset = ['0' - '9' 'A' - 'Z' 'a' - 'z']
+let oct_charset = ['0' - '7']
+let bin_charset = ['0' - '1']
+let nondigit_charset = ['A' - 'Z' 'a' - 'z' '_']
 let brank = [' ' '\t' '\n' '\r']
 
 rule token = parse
@@ -19,6 +22,10 @@ rule token = parse
     { PRE }
 | "post"
     { POST }
+| '-'? digit_charset (digit_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| '-'? ("0x" | "0X") hex_charset (hex_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| '-'? ("0o" | "0O") oct_charset (oct_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| '-'? ("0b" | "0B") bin_charset (bin_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
 | eof
     { EOF }
 | "=="

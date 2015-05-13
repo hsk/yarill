@@ -86,8 +86,8 @@ identifier_sequence ::= operator_identifier_sequence | normal_identifier_sequenc
 
 ```
 integer_literal ::=
-    [ '-' ]（'0' … '9'）{  '0' … '9' |  '_'  }  
-  | [ '-' ] (0x | 0X) ('0' … '9' | 'A' … 'F' | 'a' … 'f') { '0' … '9' | 'A' … 'F' | 'a' … 'a' |  '_' }
+    [ '-' ] digit_charset { digit_charset | '_' }  
+  | [ '-' ] (0x | 0X) (digit_charset | 'A' … 'F' | 'a' … 'f') { digit_charset | 'A' … 'F' | 'a' … 'a' |  '_' }
   | [ '-' ] ("0o" | "0O") ('0' … '7') { '0' … '7' | '_' }  
   | [ '-' ] ("0b" | "0B") ('0' … '1') { '0' … '1' | '_' }
 ```
