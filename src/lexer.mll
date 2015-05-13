@@ -1,14 +1,22 @@
 {
 open Parser
+
+let float_of_string s =
+    let len = String.length s in
+    match String.get s (len - 1) with
+    | 'f' | 'F' | 'l' | 'L' -> float_of_string (String.sub s 0 (len - 1))
+    | _ -> float_of_string s
 }
 
+let brank = [' ' '\t' '\n' '\r']
+let nondigit_charset = ['A' - 'Z' 'a' - 'z' '_']
 let digit_charset = ['0' - '9']
 let hex_charset = ['0' - '9' 'A' - 'Z' 'a' - 'z']
 let oct_charset = ['0' - '7']
 let bin_charset = ['0' - '1']
-let nondigit_charset = ['A' - 'Z' 'a' - 'z' '_']
-let brank = [' ' '\t' '\n' '\r']
-
+let sign = ['+' '-']
+let exponent_part = ['e' 'E'] sign? digit_charset+
+let float_type = ['f' 'l' 'F' 'L']
 rule token = parse
 | brank+
     { token lexbuf }
@@ -22,6 +30,10 @@ rule token = parse
     { PRE }
 | "post"
     { POST }
+| digit_charset+ '.' digit_charset* exponent_part? float_type? as f { FLOAT_LITERAL(float_of_string f) }
+| '.' digit_charset+ as f { FLOAT_LITERAL(float_of_string f) }
+| digit_charset+ exponent_part float_type? as f { FLOAT_LITERAL(float_of_string f) }
+| digit_charset+ float_type as f { FLOAT_LITERAL(float_of_string f) }
 | '-'? digit_charset (digit_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
 | '-'? ("0x" | "0X") hex_charset (hex_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
 | '-'? ("0o" | "0O") oct_charset (oct_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }

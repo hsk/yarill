@@ -22,6 +22,21 @@ let test_integer_literal expected input =
       Printf.printf "parser error input %S expected %d\n" input expected
   end
 
+let test_float_literal expected input =
+  begin try
+    let lexbuf = Lexing.from_string input in
+    let result = Parser.float_literal Lexer.token lexbuf in
+    if expected <> result
+    then
+      Printf.printf "error input %S expected %f result %f\n" input expected result;
+  with
+    | Parsing.Parse_error ->
+      Printf.printf "parser error input %S expected %f\n" input expected
+    | _ ->
+      Printf.printf "fail float of string input %S expected %f\n" input expected
+
+  end
+
 let _ =
   Printf.printf "test_identifier_sequence start\n";
   test_identifier_sequence "a" "a";
@@ -190,5 +205,27 @@ let _ =
   test_integer_literal (-0b11) "-0b11";
   test_integer_literal (-0b111) "-0b111";
   test_integer_literal (-0b11111111) "-0b1111_1111_";
+
+  test_float_literal 0.1 "0.100000";
+  test_float_literal 9.9 "9.9";
+  test_float_literal 1. "1.";
+  test_float_literal 0.1 "0.100000e";
+  test_float_literal 9.9 "9.9e";
+  test_float_literal 1. "1.e";
+  test_float_literal 0.1e2 "0.100000e2";
+  test_float_literal 9.9e2 "9.9e2";
+  test_float_literal 1.e2 "1.e2";
+  test_float_literal 0.1e2 "0.100000E2";
+  test_float_literal 9.9e2 "9.9E2";
+  test_float_literal 1.e2 "1.E2";
+  test_float_literal 0.1e2 "0.100000e2f";
+  test_float_literal 0.1e2 "0.100000E2f";
+  test_float_literal 0.1e2 "0.100000e2F";
+  test_float_literal 0.1e2 "0.100000E2F";
+  test_float_literal 0.1e2 "0.100000e2l";
+  test_float_literal 0.1e2 "0.100000E2l";
+  test_float_literal 0.1e2 "0.100000e2L";
+  test_float_literal 0.1e2 "0.100000E2L";
+
 
   Printf.printf "test_identifier_sequence end\n";

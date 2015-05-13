@@ -96,13 +96,13 @@ integer_literal ::=
 
 ```
 float_literal ::=
-    digit_charset+ '.' digit_charset+ [exponent_part] [float_type]
+    digit_charset+ '.' { digit_charset } [exponent_part] [float_type]
   | '.' digit_charset+ [exponent_part] [float_type]
-  | digit_charset+ [exponent_part] [float_type]
-  | digit_charset+ [exponent_part] float_type
+  | digit_charset+ exponent_part [float_type]
+  | digit_charset+ float_type
 sign ::= '+' | '-'
 exponent_part ::= ('e' | 'E') [sign] digit_charset+
-floating_suffix ::= 'f' | 'l' | 'F' | 'L'
+float_type ::= 'f' | 'l' | 'F' | 'L'
 ```
 
 ### 文字列リテラル

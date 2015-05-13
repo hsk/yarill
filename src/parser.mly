@@ -473,31 +473,6 @@ numeric_literal:
   | float_literal { $1 }
   | integer_literal { $1 }
 
-
-/* TODO: check range */
-float_literal:
-  | FLOAT { FloatValue($1) }
-
-/* TODO: */
-/*
-fp <-
-( fractional_constant >> -exponent_part>> -floating_suffix )
-| ( +digit_charset >> exponent_part >> -floating_suffix )
-
-fractional_constant <-
-    +digit_charset >> x3::lit( '.' ) >> +digit_charset
-
-sign <-
-    lit('+') | lit('-')
-
-exponent_part <-
-    (lit('e') | 'E') >> -sign >> +digit_charset
-
-floating_suffix <-
-    lit('f') | 'l' | 'F' | 'L'
-*/
-
-
 /* ==================================================================================================== */
 boolean_literal:
   | TRUE { true }
@@ -525,6 +500,7 @@ escape_sequence:
 
 %token <string> NORMAL_IDENTFIRE_SEQUENCE
 %token <int> INTEGER_LITERAL
+%token <float> FLOAT_LITERAL
 %token OP PRE POST
 %token EQ NE LOR LAND LE GE LSHIFT RSHIFT
 %token LPAREN RPAREN LBRACKET RBRACKET
@@ -534,6 +510,8 @@ escape_sequence:
 %start identifier_sequence
 %type <int> integer_literal
 %start integer_literal
+%type <float> float_literal
+%start float_literal
 
 %%
 
@@ -576,3 +554,6 @@ op_assoc:
 
 integer_literal:
   | INTEGER_LITERAL { $1 }
+
+float_literal:
+  | FLOAT_LITERAL { $1 }
