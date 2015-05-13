@@ -501,6 +501,7 @@ escape_sequence:
 %token <string> NORMAL_IDENTFIRE_SEQUENCE
 %token <int> INTEGER_LITERAL
 %token <float> FLOAT_LITERAL
+%token <string> STRING_LITERAL
 %token OP PRE POST
 %token EQ NE LOR LAND LE GE LSHIFT RSHIFT
 %token LPAREN RPAREN LBRACKET RBRACKET
@@ -512,6 +513,8 @@ escape_sequence:
 %start integer_literal
 %type <float> float_literal
 %start float_literal
+%type <string> string_literal
+%start string_literal
 
 %%
 
@@ -557,3 +560,6 @@ integer_literal:
 
 float_literal:
   | FLOAT_LITERAL { $1 }
+
+string_literal:
+  | STRING_LITERAL { $1 }

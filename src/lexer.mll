@@ -6,6 +6,9 @@ let float_of_string s =
     match String.get s (len - 1) with
     | 'f' | 'F' | 'l' | 'L' -> float_of_string (String.sub s 0 (len - 1))
     | _ -> float_of_string s
+
+let buf = ref ""
+
 }
 
 let brank = [' ' '\t' '\n' '\r']
@@ -88,9 +91,31 @@ rule token = parse
     { ASSIGN }
 | nondigit_charset (nondigit_charset | digit_charset)* as s
     { NORMAL_IDENTFIRE_SEQUENCE s }
+
+| '"' { buf := ""; strings lexbuf }
 | _
     { failwith
       (Printf.sprintf "unknown token %s near characters %d-%d"
         (Lexing.lexeme lexbuf)
         (Lexing.lexeme_start lexbuf)
         (Lexing.lexeme_end lexbuf)) }
+
+and strings = parse
+| '\\' '\\' { buf := !buf ^ "\\" ; strings lexbuf }
+| '\\' '"'  { buf := !buf ^ "\"" ; strings lexbuf }
+| '\\' '\'' { buf := !buf ^ "'" ; strings lexbuf }
+| '\\' 'n'  { buf := !buf ^ "\n" ; strings lexbuf }
+| '\\' 'r'  { buf := !buf ^ "\r" ; strings lexbuf }
+| '\\' 't'  { buf := !buf ^ "\t" ; strings lexbuf }
+| '\\' 'b'  { buf := !buf ^ "\b" ; strings lexbuf }
+| '\\' ' '  { buf := !buf ^ " " ; strings lexbuf }
+| '\\' (oct_charset oct_charset oct_charset as s)
+    { buf := !buf ^ (String.make 1 (Char.chr(int_of_string(s)))); strings lexbuf }
+| "\\x" (hex_charset hex_charset as s)
+    { buf := !buf ^ (String.make 1 (Char.chr(int_of_string("0x" ^ s)))); strings lexbuf }
+| '"'
+    { STRING_LITERAL !buf }
+| eof
+    { Format.eprintf "warning: unterminated comment@." ; STRING_LITERAL !buf}
+| _
+    { buf := !buf ^ (Lexing.lexeme lexbuf); strings lexbuf }

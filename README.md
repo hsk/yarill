@@ -133,7 +133,7 @@ string_literal ::= string_literal_sequence
 | \t       | 水平タブ（TAB）           |
 | \b       | バックスペース（BS）       |
 | \ スペース | スペース（SPC）           |
-| \DDD     | 文字DDDはASCIIコードの8進数 |
+| \DDD     | 文字DDDはASCIIコードの10進数 |
 | \x HH    | 文字HHはASCIIコードの16進数 |
 
 

@@ -37,6 +37,18 @@ let test_float_literal expected input =
 
   end
 
+let test_string_literal expected input =
+  begin try
+    let lexbuf = Lexing.from_string input in
+    let result = Parser.string_literal Lexer.token lexbuf in
+    if expected <> result
+    then
+      Printf.printf "error input %S expected %S result %S\n" input expected result;
+  with
+    | Parsing.Parse_error ->
+      Printf.printf "parser error input %S expected %S\n" input expected
+  end
+
 let _ =
   Printf.printf "test_identifier_sequence start\n";
   test_identifier_sequence "a" "a";
@@ -243,6 +255,22 @@ let _ =
   test_float_literal 0.1e-2 "0.100000E-2l";
   test_float_literal 0.1e-2 "0.100000e-2L";
   test_float_literal 0.1e-2 "0.100000E-2L";
+
+  test_string_literal "" "\"\"";
+  test_string_literal "a" "\"a\"";
+  test_string_literal "aa" "\"aa\"";
+  test_string_literal "\"" "\"\\\"\"";
+  test_string_literal "\\" "\"\\\\\"";
+  test_string_literal "\'" "\"\\'\"";
+  test_string_literal "\n" "\"\\n\"";
+  test_string_literal "\r" "\"\\r\"";
+  test_string_literal "\t" "\"\\t\"";
+  test_string_literal "\b" "\"\\b\"";
+  test_string_literal " " "\"\\\ \"";
+  test_string_literal "\000" "\"\\000\"";
+  test_string_literal "\010" "\"\\010\"";
+  test_string_literal "\020" "\"\\020\"";
+  test_string_literal "\x40" "\"\\x40\"";
 
 
   Printf.printf "test_identifier_sequence end\n";
