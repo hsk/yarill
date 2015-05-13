@@ -13,8 +13,6 @@ rule token = parse
     { token lexbuf }
 | "//" [^ '\r' '\n'] ('\r' | '\n')
     { token lexbuf }
-| nondigit_charset (nondigit_charset | digit_charset)* as s
-    { NORMAL_IDENTFIRE_SEQUENCE s }
 | "op"
     { OP }
 | "pre"
@@ -69,6 +67,8 @@ rule token = parse
     { GT }
 | '='
     { ASSIGN }
+| nondigit_charset (nondigit_charset | digit_charset)* as s
+    { NORMAL_IDENTFIRE_SEQUENCE s }
 | _
     { failwith
       (Printf.sprintf "unknown token %s near characters %d-%d"
