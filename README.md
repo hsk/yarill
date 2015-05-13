@@ -116,8 +116,8 @@ float_type ::= 'f' | 'l' | 'F' | 'L'
 現在の実装では、文字列リテラルの長さに実質的に制限がありません。
 
 ```
-escape_sequence ::= '\n'
-string_literal_sequence ::= '"' ((escape_sequence | char) - '"')* '"'
+escape_sequence ::= "\\" | '\"' | "\'" | "\n" | "\r" | "\t" | "\b" | "\ " | "\DDD" | "\xHH"
+string_literal_sequence ::= '"' { (escape_sequence | char - '"') } '"'
 string_literal ::= string_literal_sequence
 ```
 
@@ -138,17 +138,6 @@ string_literal ::= string_literal_sequence
 
 
 ## Context-free Syntax
-
-
-## 型スペシファイア type specifier
-
-```
-type_specifier ::= ':' id_expression
-
-decl_attribute ::= "onlymeta" | "meta" | "intrinsic" | "override"
-
-decl_attribute_list ::= decl_attribute { ',' decl_attribute } | x3::eps
-```
 
 ## プライマリ値 Primary value
 
@@ -187,14 +176,18 @@ numeric_literal ::= float_literal | integer_literal
 
 ## 式 expression
 
+式(expression)は代入式(assign\_expression)です。comma\_expressionではないので、カンマ区切りで史記を書く事は出来ません。
+
 ```
 expression ::= assign_expression
 ```
 
 ### 二項演算子式 binary operator expression
 
+二項演算子は "," "=" "||" "&&" "|" "^" "&" "==" "!=" "<=" "<" ">=" ">" "<<" ">>" "+" "-" "*" "/" "%" があります。
+
 ```
-commma_expression ::=
+comma_expression ::=
     assign_expression
   | assign_expression { ',' comma_expression }
 
@@ -218,7 +211,27 @@ add_sub_expression ::=
 mul_div_rem_expression ::= unary_expression { ('*' | '/' | '%') unary_expression }
 ```
 
+優先順位は表のようになります。
+
+| 優先順位 | 演算子 | 結合性 |
+| ------ | ----- | ----- |
+| 1 | ","   | 右 |
+| 2 | "="   | 右 |
+| 3 | "||"  | 左 |
+| 4 | "&&"  | 左 |
+| 5 | "|"  | 左 |
+| 6 | "^"  | 左 |
+| 7 | "&"  | 左 |
+| 8 | "==" "!=" | 左 |
+| 9 | "<=" "<" ">=" ">" | 左 |
+| 10 | "<<" ">>" | 左 |
+| 11 | "+" | 左 |
+| 12 | "-" | 左 |
+| 13 | "*" "/" "%" | 左 |
+
 ### 前置演算子式 unary expression
+
+前置演算子は '-' '+' '*' '&' "new"があります。
 
 ```
 unary_expression ::= postfix_expression
@@ -226,6 +239,10 @@ unary_expression ::= postfix_expression
 ```
 
 ### 後置演算子式 postfix expression
+
+ '.' は、構造体やクラスのメンバにアクセスする為に用いる２項演算子です。
+ '[' ']'は配列アクセスをするために用います。
+ '(' ')'は関数を呼び出す式で、','で区切ってパラメータを複数指定出来ます。
 
 ```
 postfix_expression ::= primary_expression
@@ -238,8 +255,30 @@ argument_list ::= | '(' ')' | '(' [ assign_expression { ',' assign_expression } 
 
 ### プライマリ式 primary expression
 
+プライマリ式はプライマリ値か、括弧 '(' ')' で括った式か、ラムダ式です。
+
 ```
 primary_expression ::= primary_value | '(' expression ')' | lambda_expression
+```
+
+### 型指定子 type specifier
+
+型の指定は':'の後ろに識別子式を使って行います。id\_expressionはconditional\_expression なので、様々な演算を行う事が可能です。
+
+```
+type_specifier ::= ':' id_expression
+id_expression ::= conditional_expression
+```
+
+### 属性宣言 declare attribute
+
+属性宣言 decl\_attribute は "onlymeta" "meta" "intrinsic" "override" のいずれかを指定します。
+属性宣言リストは属性宣言を',' で区切った１つ以上のシーケンスです。
+
+```
+decl_attribute ::= "onlymeta" | "meta" | "intrinsic" | "override"
+
+decl_attribute_list ::= decl_attribute { ',' decl_attribute }
 ```
 
 ### ラムダ式 lambda expression

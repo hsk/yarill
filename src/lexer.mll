@@ -101,14 +101,14 @@ rule token = parse
         (Lexing.lexeme_end lexbuf)) }
 
 and strings = parse
-| '\\' '\\' { buf := !buf ^ "\\" ; strings lexbuf }
-| '\\' '"'  { buf := !buf ^ "\"" ; strings lexbuf }
-| '\\' '\'' { buf := !buf ^ "'" ; strings lexbuf }
-| '\\' 'n'  { buf := !buf ^ "\n" ; strings lexbuf }
-| '\\' 'r'  { buf := !buf ^ "\r" ; strings lexbuf }
-| '\\' 't'  { buf := !buf ^ "\t" ; strings lexbuf }
-| '\\' 'b'  { buf := !buf ^ "\b" ; strings lexbuf }
-| '\\' ' '  { buf := !buf ^ " " ; strings lexbuf }
+| "\\\\" { buf := !buf ^ "\\" ; strings lexbuf }
+| "\\\"" { buf := !buf ^ "\"" ; strings lexbuf }
+| "\\\'" { buf := !buf ^ "'" ; strings lexbuf }
+| "\\n"  { buf := !buf ^ "\n" ; strings lexbuf }
+| "\\r"  { buf := !buf ^ "\r" ; strings lexbuf }
+| "\\t"  { buf := !buf ^ "\t" ; strings lexbuf }
+| "\\b"  { buf := !buf ^ "\b" ; strings lexbuf }
+| "\\ "  { buf := !buf ^ " " ; strings lexbuf }
 | '\\' (oct_charset oct_charset oct_charset as s)
     { buf := !buf ^ (String.make 1 (Char.chr(int_of_string(s)))); strings lexbuf }
 | "\\x" (hex_charset hex_charset as s)
@@ -116,6 +116,6 @@ and strings = parse
 | '"'
     { STRING_LITERAL !buf }
 | eof
-    { Format.eprintf "warning: unterminated comment@." ; STRING_LITERAL !buf}
+    { Format.eprintf "warning: unterminated string@." ; STRING_LITERAL !buf}
 | _
     { buf := !buf ^ (Lexing.lexeme lexbuf); strings lexbuf }
