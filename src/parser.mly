@@ -546,30 +546,30 @@ normal_identifier_sequence:
   | NORMAL_IDENTFIRE_SEQUENCE { $1 }
 
 operator_identifier_sequence:
-  | OP op_assoc EQ { $2 ^ "==" }
-  | OP op_assoc NE { $2 ^ "!=" }
-  | OP op_assoc LOR { $2 ^ "||" }
-  | OP op_assoc LAND { $2 ^ "&&" }
-  | OP op_assoc LE { $2 ^ "<=" }
-  | OP op_assoc GE { $2 ^ ">=" }
-  | OP op_assoc LSHIFT { $2 ^ "<<" }
-  | OP op_assoc RSHIFT { $2 ^ ">>" }
-  | OP op_assoc LPAREN RPAREN { $2 ^ "()" }
-  | OP op_assoc LBRACKET RBRACKET { $2 ^ "[]" }
-  | OP op_assoc OR { $2 ^ "|" }
-  | OP op_assoc XOR { $2 ^ "^" }
-  | OP op_assoc AND { $2 ^ "&" }
-  | OP op_assoc ADD { $2 ^ "+" }
-  | OP op_assoc SUB { $2 ^ "-" }
-  | OP op_assoc MUL { $2 ^ "*" }
-  | OP op_assoc DIV { $2 ^ "/" }
-  | OP op_assoc REM { $2 ^ "%" }
-  | OP op_assoc LT { $2 ^ "<" }
-  | OP op_assoc GT { $2 ^ ">" }
-  | OP op_assoc ASSIGN { $2 ^ "=" }
+  | OP op_assoc EQ { "%op_" ^ $2 ^ "==" }
+  | OP op_assoc NE { "%op_" ^ $2 ^ "!=" }
+  | OP op_assoc LOR { "%op_" ^ $2 ^ "||" }
+  | OP op_assoc LAND { "%op_" ^ $2 ^ "&&" }
+  | OP op_assoc LE { "%op_" ^ $2 ^ "<=" }
+  | OP op_assoc GE { "%op_" ^ $2 ^ ">=" }
+  | OP op_assoc LSHIFT { "%op_" ^ $2 ^ "<<" }
+  | OP op_assoc RSHIFT { "%op_" ^ $2 ^ ">>" }
+  | OP op_assoc LPAREN RPAREN { "%op_" ^ $2 ^ "()" }
+  | OP op_assoc LBRACKET RBRACKET { "%op_" ^ $2 ^ "[]" }
+  | OP op_assoc OR { "%op_" ^ $2 ^ "|" }
+  | OP op_assoc XOR { "%op_" ^ $2 ^ "^" }
+  | OP op_assoc AND { "%op_" ^ $2 ^ "&" }
+  | OP op_assoc ADD { "%op_" ^ $2 ^ "+" }
+  | OP op_assoc SUB { "%op_" ^ $2 ^ "-" }
+  | OP op_assoc MUL { "%op_" ^ $2 ^ "*" }
+  | OP op_assoc DIV { "%op_" ^ $2 ^ "/" }
+  | OP op_assoc REM { "%op_" ^ $2 ^ "%" }
+  | OP op_assoc LT { "%op_" ^ $2 ^ "<" }
+  | OP op_assoc GT { "%op_" ^ $2 ^ ">" }
+  | OP op_assoc ASSIGN { "%op_" ^ $2 ^ "=" }
 
 op_assoc:
-  | PRE { "pre" }
-  | POST { "post" }
+  | PRE { "pre_" }
+  | POST { "post_" }
   | { "" }
 
