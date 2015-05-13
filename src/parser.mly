@@ -1,5 +1,4 @@
 %{
-open Ast
 
 (*
 /* code grammar */
@@ -247,6 +246,17 @@ template_parameter_variable_declaration_list:
   | NOT LPAREN RPAREN  { }
   | NOT LPAREN (template_parameter_variable_declaration % COMMA) RPAREN { }
 
+/* ==================================================================================================== */
+/* ==================================================================================================== */
+import_statement:
+  | IMPORT import_decl_unit_list statement_termination
+    { ImportStatement($2) }
+
+import_decl_unit:
+  | normal_identifier_sequence { ImportDeclUnit($1) }
+
+import_decl_unit_list:
+  | (import_decl_unit % COMMA) { $1 }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -265,19 +275,6 @@ variable_declaration:
 variable_initializer_unit:
   | identifier_relative decl_attribute_list value_initializer_unit 
     { VariableDeclarationUnit($1, $2, $3) }
-
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-import_statement:
-  | IMPORT import_decl_unit_list statement_termination
-    { ImportStatement($2) }
-
-import_decl_unit:
-  | normal_identifier_sequence { ImportDeclUnit($1) }
-
-import_decl_unit_list:
-  | (import_decl_unit % COMMA) { $1 }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -426,36 +423,10 @@ parameter_variable_declaration_list
     > -type_specifier
     > function_body_block
 */
+
+
   *)
-%}
-
-%token <int> INT
-%token <string> ID
-%token DEF VAL
-%token SEMI
-%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
-%token COLON COMMA
-%token EQ
-%token RETURN
-%token EOF
-%token ADD SUB
-%token MUL DIV
-%token ARROW
-%token ONLYMETA
-%token META
-%token INTRINSIC
-%token OVERRIDE
-%token CLASS
-%left ADD SUB
-%left MUL DIV
-
-%type <Ast.e> primary_value
-%start primary_value
-
-%%
-
-
-
+(*
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -545,14 +516,25 @@ string_literal:
     { StringValue($1) }
 
 string_literal_sequence:
-  | x3::lexeme {
-        x3::lit( '"' ) >> *( ( escape_sequence | x3::char_ ) - x3::lit( '"' ) ) >> x3::lit( '"' )
-    }
+  | STRING_LITERAL_SEQUENCE { $1 }
+    
 
-/* TODO: support some escape sequences */
 escape_sequence:
-  | x3::lit( "\\n" ) { helper::construct<char>( '\n' )}
+  | "\\n" { '\n' }
+*)
 
+%}
+
+%token <string> NORMAL_IDENTFIRE_SEQUENCE
+%token OP PRE POST
+%token EQ NE LOR LAND LE GE LSHIFT RSHIFT
+%token LPAREN RPAREN LBRACKET RBRACKET
+%token OR XOR AND ADD SUB MUL DIV REM LT GT ASSIGN
+%token EOF
+%type <string> identifier_sequence
+%start identifier_sequence
+
+%%
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -560,30 +542,34 @@ identifier_sequence:
   | operator_identifier_sequence { $1 }
   | normal_identifier_sequence { $1 }
 
+normal_identifier_sequence:
+  | NORMAL_IDENTFIRE_SEQUENCE { $1 }
+
 operator_identifier_sequence:
-  | OP op_assoc EQEQ { append("==") }
-  | OP op_assoc NE { append("!=") }
-  | OP op_assoc BARBAR { append("||") }
-  | OP op_assoc AMPAMP { append("&&") }
-  | OP op_assoc LE { append("<=") }
-  | OP op_assoc GE { append(">=") }
-  | OP op_assoc LSHIFT { append("<<") }
-  | OP op_assoc RSHIFT { append(">>") }
-  | OP op_assoc LPAREN RPAREN { append("()") }
-  | OP op_assoc LBRACK RBRACK { append("[]") }
-  | OP op_assoc BAR { append("|") }
-  | OP op_assoc XOR { append("^") }
-  | OP op_assoc AMP { append("&") }
-  | OP op_assoc ADD { append("+") }
-  | OP op_assoc SUB { append("-") }
-  | OP op_assoc MUL { append("*") }
-  | OP op_assoc DIV { append("/") }
-  | OP op_assoc REM { append("%") }
-  | OP op_assoc LT { append("<") }
-  | OP op_assoc GT { append(">") }
-  | OP op_assoc EQ { append("=") }
+  | OP op_assoc EQ { $2 ^ "==" }
+  | OP op_assoc NE { $2 ^ "!=" }
+  | OP op_assoc LOR { $2 ^ "||" }
+  | OP op_assoc LAND { $2 ^ "&&" }
+  | OP op_assoc LE { $2 ^ "<=" }
+  | OP op_assoc GE { $2 ^ ">=" }
+  | OP op_assoc LSHIFT { $2 ^ "<<" }
+  | OP op_assoc RSHIFT { $2 ^ ">>" }
+  | OP op_assoc LPAREN RPAREN { $2 ^ "()" }
+  | OP op_assoc LBRACKET RBRACKET { $2 ^ "[]" }
+  | OP op_assoc OR { $2 ^ "|" }
+  | OP op_assoc XOR { $2 ^ "^" }
+  | OP op_assoc AND { $2 ^ "&" }
+  | OP op_assoc ADD { $2 ^ "+" }
+  | OP op_assoc SUB { $2 ^ "-" }
+  | OP op_assoc MUL { $2 ^ "*" }
+  | OP op_assoc DIV { $2 ^ "/" }
+  | OP op_assoc REM { $2 ^ "%" }
+  | OP op_assoc LT { $2 ^ "<" }
+  | OP op_assoc GT { $2 ^ ">" }
+  | OP op_assoc ASSIGN { $2 ^ "=" }
 
 op_assoc:
   | PRE { "pre" }
   | POST { "post" }
   | { "" }
+

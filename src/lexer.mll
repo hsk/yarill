@@ -2,88 +2,73 @@
 open Parser
 }
 
-let space = [' ' '\t' '\n' '\r']
-let digit = ['0'-'9']
+let digit_charset = ['0' - '9']
+let nondigit_charset = ['A' - 'Z' 'a'-'z' '_']
+let brank = [' ' '\t' '\n' '\r']
 
 rule token = parse
-| space+
+| brank+
     { token lexbuf }
+| "/*" _ * "*/"
+    { token lexbuf }
+| "//" [^ '\r' '\n'] ('\r' | '\n')
+    { token lexbuf }
+| nondigit_charset (nondigit_charset | digit_charset)* as s
+    { NORMAL_IDENTFIRE_SEQUENCE s }
+| "op"
+    { OP }
+| "pre"
+    { PRE }
+| "post"
+    { POST }
+| eof
+    { EOF }
+| "=="
+    { EQ }
+| "!="
+    { NE }
+| "||"
+    { LOR }
+| "&&"
+    { LAND }
+| "<="
+    { LE }
+| ">="
+    { GE }
+| "<<"
+    { LSHIFT }
+| ">>"
+    { RSHIFT }
 | '('
     { LPAREN }
 | ')'
     { RPAREN }
-| '{'
-    { LBRACE }
-| '}'
-    { RBRACE }
-| "return"
-    { RETURN }
-| "::"
-    { CAST }
-| '@' { AT }
-| "new"
-    { NEW }
-| "include" { (token2 lexbuf) }
-| "this" { THIS }
-| "class" { CLASS }
-| "trait" { TRAIT }
-| "onlymeta" { ONLYMETA }
-| "meta" { META }
-| "intrinsic" { INTRINSIC }
-| "override" { OVERRIDE }
-| "<:" { IMPLEMENT }
-| ":>" { RIMPLEMENT }
-| "=>" { ARROW }
-| "->" { MEMBER }
-| "|>" { FARROW }
-| "if" { IF }
-| "else" { ELSE }
-| digit+
-    { INT(int_of_string (Lexing.lexeme lexbuf)) }
-| '-'
-    { SUB }
+| '['
+    { LBRACKET }
+| ']'
+    { RBRACKET }
+| '|'
+    { OR }
+| '^'
+    { XOR }
+| '&'
+    { AND }
 | '+'
     { ADD }
+| '-'
+    { SUB }
 | '*'
     { MUL }
-| '&'
-    { AMP }
-| '<' { LT }
-| '>' { GT }
-| "<=" { LE }
-| ">=" { GE }
-| '.' { DOT }
-| ','
-    { COMMA }
-| ';'
-    { SEMICOLON }
-| ':'
-    { COLON }
+| '/'
+    { DIV }
+| '%'
+    { REM }
+| '<'
+    { LT }
+| '>'
+    { GT }
 | '='
     { ASSIGN }
-| '"' [^ '"']* '"' 
-    { STRING(Lexing.lexeme lexbuf) }
-| ['a'-'z' 'A'-'Z' '_']['a'-'z' 'A'-'Z' '_' '0'-'9']*
-    { ID(Lexing.lexeme lexbuf) }
-| '!' { NOT }
-| eof
-    { EOF }
-| _
-    { failwith
-      (Printf.sprintf "unknown token %s near characters %d-%d"
-        (Lexing.lexeme lexbuf)
-        (Lexing.lexeme_start lexbuf)
-        (Lexing.lexeme_end lexbuf)) }
-
-and token2 = parse
-| space+
-    { token2 lexbuf }
-| eof
-    { EOF }
-| '"' [^ '"']* '"' 
-    { INCLUDE(Lexing.lexeme lexbuf) }
-| ['a'-'z' 'A'-'Z' '_' '.']* 
-    { INCLUDE("<" ^ Lexing.lexeme lexbuf ^ ">") }
 | _
     { failwith
       (Printf.sprintf "unknown token %s near characters %d-%d"
