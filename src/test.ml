@@ -131,6 +131,8 @@ let _ =
   test_integer_literal (-222) "-222";
   test_integer_literal (-3333) "-3333";
   test_integer_literal (-55555) "-55555";
+  test_integer_literal (-55555) "-55_555";
+  test_integer_literal (-55555) "-55_5__5_5_";
   test_integer_literal 0 "0x0";
   test_integer_literal 1 "0x1";
   test_integer_literal 2 "0x2";
@@ -160,6 +162,7 @@ let _ =
   test_integer_literal (-0xff) "-0xFF";
   test_integer_literal (-1) "-0X1";
   test_integer_literal (-0xff) "-0XFF";
+  test_integer_literal (-0xff) "-0XF_F_";
 
   test_integer_literal 0 "0o0";
   test_integer_literal 1 "0o1";
@@ -176,6 +179,7 @@ let _ =
   test_integer_literal (-0o77) "-0o77";
   test_integer_literal (-1) "-0O1";
   test_integer_literal (-0o77) "-0O77";
+  test_integer_literal (-0o77) "-0O7_7_";
 
   test_integer_literal 0 "0b0";
   test_integer_literal 1 "0b1";
@@ -185,5 +189,6 @@ let _ =
   test_integer_literal (-0b10) "-0b10";
   test_integer_literal (-0b11) "-0b11";
   test_integer_literal (-0b111) "-0b111";
+  test_integer_literal (-0b11111111) "-0b1111_1111_";
 
   Printf.printf "test_identifier_sequence end\n";
