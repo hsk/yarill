@@ -226,6 +226,23 @@ let _ =
   test_float_literal 0.1e2 "0.100000E2l";
   test_float_literal 0.1e2 "0.100000e2L";
   test_float_literal 0.1e2 "0.100000E2L";
+  test_float_literal 0.1e+2 "0.100000e+2f";
+  test_float_literal 0.1e+2 "0.100000E+2f";
+  test_float_literal 0.1e+2 "0.100000e+2F";
+  test_float_literal 0.1e+2 "0.100000E+2F";
+  test_float_literal 0.1e+2 "0.100000e+2l";
+  test_float_literal 0.1e+2 "0.100000E+2l";
+  test_float_literal 0.1e+2 "0.100000e+2L";
+  test_float_literal 0.1e+2 "0.100000E+2L";
+
+  test_float_literal 0.1e-2 "0.100000e-2f";
+  test_float_literal 0.1e-2 "0.100000E-2f";
+  test_float_literal 0.1e-2 "0.100000e-2F";
+  test_float_literal 0.1e-2 "0.100000E-2F";
+  test_float_literal 0.1e-2 "0.100000e-2l";
+  test_float_literal 0.1e-2 "0.100000E-2l";
+  test_float_literal 0.1e-2 "0.100000e-2L";
+  test_float_literal 0.1e-2 "0.100000E-2L";
 
 
   Printf.printf "test_identifier_sequence end\n";
