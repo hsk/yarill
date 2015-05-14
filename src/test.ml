@@ -464,4 +464,132 @@ let _ =
       (EInt 1)))
     ".a!b+1";
 
+  test_expression (EBin (EIdentifier ("b", false), "=", EInt 1)) "b = 1";
+  test_expression (EBin (EIdentifier ("b", false), "||", EInt 1)) "b || 1";
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "||", EIdentifier ("b", false)),
+      "||",
+      EIdentifier ("c", false)))
+    "a || b || c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "&&", EIdentifier ("b", false)),
+      "&&",
+      EIdentifier ("c", false)))
+    "a && b && c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "|", EIdentifier ("b", false)),
+      "|",
+      EIdentifier ("c", false)))
+    "a | b | c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "^", EIdentifier ("b", false)),
+      "^",
+      EIdentifier ("c", false)))
+    "a ^ b ^ c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "&", EIdentifier ("b", false)),
+      "&",
+      EIdentifier ("c", false)))
+    "a & b & c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "==", EIdentifier ("b", false)),
+      "==",
+      EIdentifier ("c", false)))
+    "a == b == c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "!=", EIdentifier ("b", false)),
+      "!=",
+      EIdentifier ("c", false)))
+    "a != b != c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "<=", EIdentifier ("b", false)),
+      "<=",
+      EIdentifier ("c", false)))
+    "a <= b <= c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "<", EIdentifier ("b", false)),
+      "<",
+      EIdentifier ("c", false)))
+    "a < b < c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), ">=", EIdentifier ("b", false)),
+      ">=",
+      EIdentifier ("c", false)))
+    "a >= b >= c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), ">", EIdentifier ("b", false)),
+      ">",
+      EIdentifier ("c", false)))
+    "a > b > c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "<<", EIdentifier ("b", false)),
+      "<<",
+      EIdentifier ("c", false)))
+    "a << b << c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), ">>", EIdentifier ("b", false)),
+      ">>",
+      EIdentifier ("c", false)))
+    "a >> b >> c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "+", EIdentifier ("b", false)),
+      "+",
+      EIdentifier ("c", false)))
+    "a + b + c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "-", EIdentifier ("b", false)),
+      "-",
+      EIdentifier ("c", false)))
+    "a - b - c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "*", EIdentifier ("b", false)),
+      "*",
+      EIdentifier ("c", false)))
+    "a * b * c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "/", EIdentifier ("b", false)),
+      "/",
+      EIdentifier ("c", false)))
+    "a / b / c";
+
+  test_expression
+    (EBin (
+      EBin (EIdentifier ("a", false), "%", EIdentifier ("b", false)),
+      "%",
+      EIdentifier ("c", false)))
+    "a % b % c";
+
   Printf.printf "test_expression identifier_value_set end\n";

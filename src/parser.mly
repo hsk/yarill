@@ -461,50 +461,50 @@ conditional_expression:
 
 logical_or_expression:
   | logical_and_expression { $1 }
-  | logical_and_expression LOR logical_and_expression { EBin($1, "||", $3) }
+  | logical_or_expression LOR logical_and_expression { EBin($1, "||", $3) }
 
 logical_and_expression:
   | bitwise_or_expression { $1 }
-  | bitwise_or_expression LAND bitwise_or_expression { EBin($1, "&&", $3) }
+  | logical_and_expression LAND bitwise_or_expression { EBin($1, "&&", $3) }
 
 bitwise_or_expression:
   | bitwise_xor_expression { $1 }
-  | bitwise_xor_expression OR bitwise_xor_expression { EBin($1, "|", $3) }
+  | bitwise_or_expression OR bitwise_xor_expression { EBin($1, "|", $3) }
 
 bitwise_xor_expression:
   | bitwise_and_expression { $1 }
-  | bitwise_and_expression XOR bitwise_and_expression { EBin($1, "^", $3) }
+  | bitwise_xor_expression XOR bitwise_and_expression { EBin($1, "^", $3) }
 
 bitwise_and_expression:
   | equality_expression { $1 }
-  | equality_expression AND equality_expression { EBin($1, "&", $3) }
+  | bitwise_and_expression AND equality_expression { EBin($1, "&", $3) }
 
 equality_expression:
   | relational_expression { $1 }
-  | relational_expression EQ relational_expression { EBin($1, "==", $3) }
-  | relational_expression NE relational_expression { EBin($1, "!=", $3) }
+  | equality_expression EQ relational_expression { EBin($1, "==", $3) }
+  | equality_expression NE relational_expression { EBin($1, "!=", $3) }
 
 relational_expression:
   | shift_expression { $1 }
-  | shift_expression LE shift_expression { EBin($1, "<=", $3) }
-  | shift_expression LT shift_expression { EBin($1, "<",  $3) }
-  | shift_expression GE shift_expression { EBin($1, ">=", $3) }
-  | shift_expression GT shift_expression { EBin($1, ">",  $3) }
+  | relational_expression LE shift_expression { EBin($1, "<=", $3) }
+  | relational_expression LT shift_expression { EBin($1, "<",  $3) }
+  | relational_expression GE shift_expression { EBin($1, ">=", $3) }
+  | relational_expression GT shift_expression { EBin($1, ">",  $3) }
 
 shift_expression:
   | add_sub_expression { $1 }
-  | add_sub_expression LSHIFT add_sub_expression { EBin($1, "<<", $3) }
-  | add_sub_expression RSHIFT add_sub_expression { EBin($1, ">>", $3) }
+  | shift_expression LSHIFT add_sub_expression { EBin($1, "<<", $3) }
+  | shift_expression RSHIFT add_sub_expression { EBin($1, ">>", $3) }
 
 add_sub_expression:
   | mul_div_rem_expression { $1 }
-  | mul_div_rem_expression ADD mul_div_rem_expression { EBin($1, "+", $3) }
-  | unary_expression SUB mul_div_rem_expression { EBin($1, "-", $3) }
+  | add_sub_expression ADD mul_div_rem_expression { EBin($1, "+", $3) }
+  | add_sub_expression SUB mul_div_rem_expression { EBin($1, "-", $3) }
 mul_div_rem_expression:
   | unary_expression { $1 }
-  | unary_expression MUL unary_expression { EBin($1, "*", $3) }
-  | unary_expression DIV unary_expression { EBin($1, "/", $3) }
-  | unary_expression REM unary_expression { EBin($1, "%", $3) }
+  | mul_div_rem_expression MUL unary_expression { EBin($1, "*", $3) }
+  | mul_div_rem_expression DIV unary_expression { EBin($1, "/", $3) }
+  | mul_div_rem_expression REM unary_expression { EBin($1, "%", $3) }
 
 unary_expression:
   | postfix_expression   { $1 }
