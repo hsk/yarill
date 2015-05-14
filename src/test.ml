@@ -300,6 +300,88 @@ let _ =
   test_string_literal_sequence "\x40" "\"\\x40\"";
   Printf.printf "test_string_literal_sequence end\n";
 
+  Printf.printf "test_expression integer start\n";
+  test_expression (EInt 0) "0";
+  test_expression (EInt 1) "1";
+  test_expression (EInt 2) "2";
+  test_expression (EInt 3) "3";
+  test_expression (EInt 4) "4";
+  test_expression (EInt 5) "5";
+  test_expression (EInt 6) "6";
+  test_expression (EInt 7) "7";
+  test_expression (EInt 8) "8";
+  test_expression (EInt 9) "9";
+  test_expression (EInt 10) "10";
+  test_expression (EInt 99) "99";
+  test_expression (EInt 100) "100";
+  test_expression (EInt 9999) "9999";
+  test_expression (EInt (-0)) "-0";
+  test_expression (EInt (-1)) "-1";
+  test_expression (EInt (-19)) "-19";
+  test_expression (EInt (-222)) "-222";
+  test_expression (EInt (-3333)) "-3333";
+  test_expression (EInt (-55555)) "-55555";
+  test_expression (EInt (-55555)) "-55_555";
+  test_expression (EInt (-55555)) "-55_5__5_5_";
+  test_expression (EInt 0) "0x0";
+  test_expression (EInt 1) "0x1";
+  test_expression (EInt 2) "0x2";
+  test_expression (EInt 3) "0x3";
+  test_expression (EInt 4) "0x4";
+  test_expression (EInt 5) "0x5";
+  test_expression (EInt 6) "0x6";
+  test_expression (EInt 7) "0x7";
+  test_expression (EInt 8) "0x8";
+  test_expression (EInt 9) "0x9";
+  test_expression (EInt 0xa) "0xa";
+  test_expression (EInt 0xa) "0xA";
+  test_expression (EInt 0xb) "0xb";
+  test_expression (EInt 0xb) "0xB";
+  test_expression (EInt 0xc) "0xc";
+  test_expression (EInt 0xC) "0xC";
+  test_expression (EInt 0xd) "0xd";
+  test_expression (EInt 0xD) "0xD";
+  test_expression (EInt 0xe) "0xe";
+  test_expression (EInt 0xE) "0xE";
+  test_expression (EInt 0xf) "0xf";
+  test_expression (EInt 0xF) "0xF";
+  test_expression (EInt 0xff) "0xff";
+  test_expression (EInt 0x0) "0X0";
+  test_expression (EInt 0xff) "0XFF";
+  test_expression (EInt (-1)) "-0x1";
+  test_expression (EInt (-0xff)) "-0xFF";
+  test_expression (EInt (-1)) "-0X1";
+  test_expression (EInt (-0xff)) "-0XFF";
+  test_expression (EInt (-0xff)) "-0XF_F_";
+
+  test_expression (EInt 0) "0o0";
+  test_expression (EInt 1) "0o1";
+  test_expression (EInt 2) "0o2";
+  test_expression (EInt 3) "0o3";
+  test_expression (EInt 4) "0o4";
+  test_expression (EInt 5) "0o5";
+  test_expression (EInt 6) "0o6";
+  test_expression (EInt 7) "0o7";
+  test_expression (EInt 0o77) "0o77";
+  test_expression (EInt 0) "0O0";
+  test_expression (EInt 0o77) "0O77";
+  test_expression (EInt (-1)) "-0o1";
+  test_expression (EInt (-0o77)) "-0o77";
+  test_expression (EInt (-1)) "-0O1";
+  test_expression (EInt (-0o77)) "-0O77";
+  test_expression (EInt (-0o77)) "-0O7_7_";
+
+  test_expression (EInt 0) "0b0";
+  test_expression (EInt 1) "0b1";
+  test_expression (EInt 0b10) "0b10";
+  test_expression (EInt 0b11) "0b11";
+  test_expression (EInt (-1)) "-0b1";
+  test_expression (EInt (-0b10)) "-0b10";
+  test_expression (EInt (-0b11)) "-0b11";
+  test_expression (EInt (-0b111)) "-0b111";
+  test_expression (EInt (-0b11111111)) "-0b1111_1111_";
+  Printf.printf "test_expression integer end\n";
+
   Printf.printf "test_expression float start\n";
   test_expression (EFloat 0.1) "0.100000";
   test_expression (EFloat 9.9) "9.9";
@@ -367,3 +449,19 @@ let _ =
   test_expression (EArray [EInt 1; EInt 2; EInt 3]) "[1, 2, 3]";
   Printf.printf "test_expression array start\n";
 
+  Printf.printf "test_expression identifier_value_set start\n";
+  test_expression (EIdentifier ("a", false)) "a";
+  test_expression (EIdentifier ("a1", false)) "a1";
+  test_expression (EIdentifier ("a", true)) ".a";
+  test_expression (ETemplateInstance ("a", [], false)) "a!()";
+  test_expression (ETemplateInstance ("a1", [EIdentifier ("a", false)], false)) "a1!(a)";
+  test_expression (ETemplateInstance ("a", [EIdentifier ("b", false)], true)) ".a!(b)";
+  test_expression (ETemplateInstance ("a", [EIdentifier ("a", false)], true)) ".a!a";
+  test_expression
+    (EBin (
+      ETemplateInstance ("a", [EIdentifier ("b", false)], true),
+      "+",
+      (EInt 1)))
+    ".a!b+1";
+
+  Printf.printf "test_expression identifier_value_set end\n";

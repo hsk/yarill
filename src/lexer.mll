@@ -95,6 +95,10 @@ rule token = parse
     { ASSIGN }
 | ','
     { COMMA }
+| '.'
+    { DOT }
+| '!'
+    { NOT }
 | nondigit_charset (nondigit_charset | digit_charset)* as s
     { NORMAL_IDENTFIRE_SEQUENCE s }
 

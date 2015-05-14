@@ -24,7 +24,6 @@ RMS[] += $(PROGRAM) *.opt a.out
 
 test: $(OCamlProgram $(PROGRAM2), $(FILES))
   ./test
-  rm -f $(RMS)
 
 clean:
   rm -f $(RMS)
