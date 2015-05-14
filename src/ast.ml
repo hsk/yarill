@@ -11,18 +11,20 @@ type e =
   | ECall of e * e list
   | ETemplateInstance of string * e list * bool
   | EElementSelector of e * e
-[@@deriving show]
-
-type a =
+  | ELambda of
+    (e * a * (e option * e option) option) list option *
+    (string * (e option * (e option * e option))) list *
+    a list *
+    e option *
+    s list
+and a =
   | AOnlymeta
   | AMeta
   | AIntrinsic
   | AOverride
   | ADefault
   | AExtern
-[@@deriving show]
-
-type s =
+and s =
   | SBlock of s list
   | SVariableDeclaration of (string * (e * a list * (e option * e option)))
   | SWhile of e * s
@@ -37,10 +39,19 @@ type c =
   | CFunctionDefinition of
     (e * a * (e option * e option) option) list option *
     e *
-    (string * (e option * (e option * e option))) list (* *
-    a list *
+    (string * (e option * (e option * e option))) list *
+    a list  *
+    (e * e) list *
     e option *
-    s list *)
+    s list
+  | CVirtualFunctionDefinition of
+    e *
+    (string * (e option * (e option * e option))) list *
+    a list  *
+    e option *
+    s list
+  | CVariableDeclaration of
+    (string * (e * a list * (e option * e option)))
 [@@deriving show]
 
 type ts =

@@ -22,9 +22,8 @@ open Ast
 %token ONLYMETA META INTRINSIC OVERRIDE
 %token IF ELSE WHILE RETURN
 %token ARROW DEF
-%token EXTERN IMPORT CLASS 
-/*%token   BACKSLASH
-*/
+%token EXTERN IMPORT CLASS VIRTUAL
+%token BACKSLASH
 %token EOF
 %type <string> identifier_sequence
 %start identifier_sequence
@@ -279,7 +278,7 @@ statement_termination:
 /* ==================================================================================================== */
 variable_declaration_statement:
   | variable_declaration statement_termination
-    { $1 }
+    { SVariableDeclaration $1 }
 
 variable_holder_kind_specifier:
   | VAL { "val" }
@@ -287,7 +286,7 @@ variable_holder_kind_specifier:
 
 variable_declaration:
   | variable_holder_kind_specifier variable_initializer_unit
-    { SVariableDeclaration($1, $2) }
+    { ($1, $2) }
 
 variable_initializer_unit:
   | identifier_relative decl_attribute_list value_initializer_unit
@@ -410,8 +409,6 @@ function_body_block:
   | ARROW expression statement_termination { [SExpression $2] }
 
 /* ==================================================================================================== */
-/*
-
 lambda_expression:
   | lambda_introducer
     template_parameter_variable_declaration_list_opt
@@ -419,7 +416,7 @@ lambda_expression:
     decl_attribute_list
     type_specifier_opt
     function_body_statements_list_for_lambda
-    { ELambda($1, $2, $3, $4, $5) }
+    { ELambda($2, $3, $4, $5, $6) }
 
 lambda_introducer:
   | BACKSLASH { () }
@@ -430,8 +427,6 @@ function_body_statements_list_for_lambda:
 
 function_online_body_for_lambda:
   | ARROW expression { [SExpression $2] }
-
-*/
 
 /* ==================================================================================================== */
 extern_statement:
@@ -498,15 +493,13 @@ class_body_block:
   | LBRACE RBRACE { [] }
   | LBRACE class_body_statements RBRACE { $2 }
 
-
 /* ==================================================================================================== */
 
 class_body_statement:
   | empty_statement { CEmpty }
   | class_function_definition_statement { $1 }
-/*
   | class_virtual_function_definition_statement { $1 }
-  | class_variable_declaration_statement { $1 }*/
+  | class_variable_declaration_statement { $1 }
 
 class_body_statements:
   | class_body_statement { [$1] }
@@ -521,32 +514,32 @@ class_function_definition_statement:
     class_variable_initializers
     type_specifier_opt
     function_body_block
-    { CFunctionDefinition($3, $2, $4) (*,  $5, $6, $7, $8) *) }
-/*
+    { CFunctionDefinition($3, $2, $4, $5, $6, $7, $8) }
+
 class_virtual_function_definition_statement:
   | VIRTUAL DEF
     identifier_relative
     parameter_variable_declaration_list
     decl_attribute_list
-    type_specifier
+    type_specifier_opt
     function_body_block
-    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4, $5) }
+    { CVirtualFunctionDefinition($3, $4, $5, $6, $7) }
 
   | VIRTUAL DEF
     identifier_relative
     parameter_variable_declaration_list
     decl_attribute_list
-    type_specifier
+    type_specifier_opt
     statement_termination
-    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
+    { CVirtualFunctionDefinition($3, $4, $5, $6, []) }
 
   | VIRTUAL DEF
     identifier_relative
     parameter_variable_declaration_list
     decl_attribute_list
     function_body_block
-    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
-*/
+    { CVirtualFunctionDefinition($3, $4, $5, None, $6) }
+
 class_variable_initializers:
   | OR class_variable_initializer_list { $2 }
 
@@ -558,17 +551,11 @@ class_variable_initializer_unit:
   | identifier_relative ASSIGN expression
     { ($1, $3) }
 
-/*
-
 class_variable_declaration_statement:
   | variable_declaration statement_termination
-    { ClassVariableDeclarationStatement($1) }
-*/
-
+    { CVariableDeclaration($1) }
 
 /* ==================================================================================================== */
-/* code grammar */
-
 program:
   | top_level_statement_list EOF { $1 }
 
