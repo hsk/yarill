@@ -301,7 +301,9 @@ postfix_expression ::= primary_expression
 primary_expression ::= primary_value | '(' expression ')' | lambda_expression
 ```
 
-### 型指定子 type specifier
+ラムダ式は、名前のない関数を作成出来る機能ですが、関数本体の定義が必要になるため、後述します。
+
+## 型指定子 type specifier
 
 型の指定は':'の後ろに識別子式を使って行います。id\_expressionはconditional\_expression なので、様々な演算を行う事が可能です。
 
@@ -310,7 +312,7 @@ type_specifier ::= ':' id_expression
 id_expression ::= conditional_expression
 ```
 
-### 属性宣言 declare attribute
+## 属性宣言 declare attribute
 
 属性宣言 decl\_attribute は "onlymeta" "meta" "intrinsic" "override" のいずれかを指定します。
 属性宣言リストは属性宣言を',' で区切った１つ以上のシーケンスです。
@@ -321,19 +323,6 @@ decl_attribute ::= "onlymeta" | "meta" | "intrinsic" | "override"
 decl_attribute_list ::= decl_attribute { ',' decl_attribute }
 ```
 
-### ラムダ式 lambda expression
-
-```
-lambda_expression ::= lambda_introducer
-    [ template_parameter_variable_declaration_list ]
-    parameter_variable_declaration_list
-    decl_attribute_list
-    [ type_specifier ]
-    function_body_statements_list_for_lambda
-
-lambda_introducer ::= '\'
-```
-
 ## 文 statements
 
 文鳥言語には文鳥なだけに文が沢山あります。
@@ -342,23 +331,13 @@ lambda_introducer ::= '\'
 ### プログラム本体文 program body statement
 
 ```
-/* executable scope, such as function, block, lambda, ... */
 program_body_statement ::=
-    block_statement
-  | variable_declaration_statement
-  | control_flow_statement
-  | return_statement
+    variable_declaration_statement
   | empty_statement
-  | expression_statement /* NOTE: this statement must be set at last */
-```
-
-### ブロック文 block statement
-
-ブロック分はプログラム本体文を複数まとめて記述したものです。
-
-```
-block_statement ::= '{' program_body_statements '}'
-program_body_statements ::= { program_body_statement }
+  | return_statement
+  | expression_statement
+  | block_statement
+  | control_flow_statement
 ```
 
 ### 値宣言文 variable declaration statement
@@ -374,6 +353,40 @@ variable_holder_kind_specifier ::= "val" | "ref"
 variable_declaration ::= variable_holder_kind_specifier variable_initializer_unit
 
 variable_initializer_unit ::= identifier_relative decl_attribute_list value_initializer_unit 
+```
+
+### empty 文 empty statement
+
+`empty` 文は ';' だけを記述した物で何も行いません。
+
+```
+empty_statement ::= statement_termination
+```
+
+### return 文 return statement
+
+`return` 文は関数から値を返します。
+
+```
+statement_termination ::= ';'
+return_statement ::= "return" expression statement_termination
+```
+
+### 式文 expression statement
+
+式文は式の評価のみ行います。
+
+```
+expression_statement ::= expression statement_termination
+```
+
+### ブロック文 block statement
+
+ブロック分はプログラム本体文を複数まとめて記述したものです。
+
+```
+block_statement ::= '{' program_body_statements '}'
+program_body_statements ::= { program_body_statement }
 ```
 
 ### コントロールフロー文 control flow statement
@@ -401,33 +414,8 @@ while_statement ::= "while" '(' expression ')' program_body_statement
 
 ```
 if_statement ::=
-	"if" '(' expression ')' program_body_statement
+  "if" '(' expression ')' program_body_statement
   | "if" '(' expression ')' program_body_statement "else" program_body_statement
-```
-
-### return 文 return statement
-
-`return` 文は関数から値を返します。
-
-```
-statement_termination ::= ';'
-return_statement ::= "return" expression statement_termination
-```
-
-### empty 文 empty statement
-
-`empty` 文は ';' だけを記述した物で何も行いません。
-
-```
-empty_statement ::= statement_termination
-```
-
-### 式文 expression statement
-
-式文は式の評価のみ行います。
-
-```
-expression_statement ::= expression statement_termination
 ```
 
 ## テンプレートパラメータ値宣言 template parameter variable declaration
@@ -596,6 +584,21 @@ class_variable_initializer_unit ::=
 
 class_variable_declaration_statement ::=
     variable_declaration statement_termination
+```
+
+### ラムダ式 lambda expression
+
+ラムダ式は、名前のない関数を定義して用いる事が出来ます。
+
+```
+lambda_expression ::= lambda_introducer
+    [ template_parameter_variable_declaration_list ]
+    parameter_variable_declaration_list
+    decl_attribute_list
+    [ type_specifier ]
+    function_body_statements_list_for_lambda
+
+lambda_introducer ::= '\'
 ```
 
 ## プログラム program

@@ -37,6 +37,28 @@ rule token = parse
     { TRUE }
 | "false"
     { FALSE }
+| "val"
+    { VAL }
+| "ref"
+    { REF }
+| "onlymeta"
+    { ONLYMETA }
+| "meta"
+    { META }
+| "intrinsic"
+    { INTRINSIC }
+| "override"
+    { OVERRIDE }
+| "while"
+    { WHILE }
+| "if"
+    { IF }
+| "else"
+    { ELSE }
+| "return"
+    { RETURN }
+| "def"
+    { DEF }
 | digit_charset+ '.' digit_charset* exponent_part? float_type? as f { FLOAT_LITERAL(float_of_string f) }
 | '.' digit_charset+ as f { FLOAT_LITERAL(float_of_string f) }
 | digit_charset+ exponent_part float_type? as f { FLOAT_LITERAL(float_of_string f) }
@@ -97,8 +119,18 @@ rule token = parse
     { COMMA }
 | '.'
     { DOT }
+| '{'
+    { LBRACE }
+| '}'
+    { RBRACE }
 | '!'
     { NOT }
+| ':'
+    { COLON }
+| ';'
+    { SEMI }
+| "=>"
+    { ARROW }
 | nondigit_charset (nondigit_charset | digit_charset)* as s
     { NORMAL_IDENTFIRE_SEQUENCE s }
 

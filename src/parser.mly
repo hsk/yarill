@@ -15,208 +15,10 @@ top_level_statements:
   | { [] }
   | top_level_statement top_level_statements { $1::$2 }
 
-top_level_statement :
-  | function_definition_statement { $1 }
-  | class_definition_statement { $1 }
-  | extern_statement { $1 }
-  | import_statement { $1 }
-  | empty_statement { $1 }
-  | expression_statement { $1 (* this rule must be located at last *) }
-
-function_definition_statement:
-  | DEF identifier_relative
-    -template_parameter_variable_declaration_list
-    parameter_variable_declaration_list
-    decl_attribute_list
-    -type_specifier
-    function_body_block
-    { Function_definition_statement($3, $2, $4, $5, $6, $7) }
-
-function_body_statements_list:
-  | LBRACE program_body_statements RBRACE { $2 }
-  | function_online_body_for_normal { $1 }
-
-function_body_statements_list_for_lambda:
-  | LBRACE program_body_statements RBRACE { $2 }
-  | function_online_body_for_lambda { $1 }
-
-function_online_body_for_normal:
-  | ARROW expression statement_termination { $2 }
-
-function_online_body_for_lambda:
-  | ARROW expression { $2 }
-
-function_body_block:
-  | function_body_statements_list { $1 }
-
-/* executable scope, such as function, block, lambda, ... */
-program_body_statement:
-  | block_statement { $1 }
-  | variable_declaration_statement { $1 }
-  | control_flow_statement { $1 }
-  | return_statement { $1 }
-  | empty_statement { $1 }
-  | expression_statement { $1 }   /* NOTE: this statement must be set at last */
-
-program_body_statements:
-  | { [] }
-  | program_body_statement program_body_statements { $1::$2 }
-
-block_statement:
-  | LBRACE program_body_statements RBRACE { $1 }
-
 /* ==================================================================================================== */
-parameter_variable_holder_kind_specifier:
-  | VAL { "val" }
-  | REF { "ref" }
-  | { "ref" }
-
-parameter_variable_declaration:
-  | parameter_variable_holder_kind_specifier
-    parameter_variable_initializer_unit
-    { ($1, $2) }
-
-parameter_variable_initializer_unit:
-  | -identifier_relative value_initializer_unit { ($1,$2) }
-
-parameter_variable_declaration_list:
-  | LPAREN RPAREN { [] }
-  | LPAREN parameter_variable_declaration % x3::lit( COMMA ) RPAREN { $2 }
-
-/* value initializer unit
- * Ex.
- * :int = 5
- * = 5
- * :int
- */
-value_initializer_unit:
-  | value_initializer_unit_only_value { assign }
-  | type_specifier -(EQ expression)
-      { ($1, $2) }
-
-value_initializer_unit_only_value:
-  | EQ expression
-      { $2 }
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-class_definition_statement:
-  | CLASS
-    identifier_relative
-    -template_parameter_variable_declaration_list
-    -base_class_type
-    -mixin_traits_list
-    decl_attribute_list
-    class_body_block
-    { ClassDefinitionStatement($3, $2, $4, $5, $6, $7) }
-
-base_class_type:
-  | LT id_expression { $2 }
-
-mixin_traits_list:
-  | LBRACKET  (id_expression % COMMA) RBRACKET { $2 }
-
-class_body_block:
-  | LBRACE class_body_statements RBRACE { $2 }
 
 
 /* ==================================================================================================== */
-
-class_body_statement:
-  | class_virtual_function_definition_statement { $1 }
-  | class_function_definition_statement { $1 }
-  | class_variable_declaration_statement { $1 }
-  | empty_statement { $1 }
-
-class_body_statements:
-  | *class_body_statement { $1 }
-
-
-class_function_definition_statement:
-  | DEF
-    identifier_relative
-    -template_parameter_variable_declaration_list
-    parameter_variable_declaration_list
-    decl_attribute_list
-    -class_variable_initializers
-    -type_specifier
-    function_body_block
-    { ClassFunctionDefinitionStatement($2, $1, $3, $4, $5, $6, $7) }
-
-class_virtual_function_definition_statement:
-  | VIRTUAL DEF
-    identifier_relative
-    parameter_variable_declaration_list
-    decl_attribute_list
-    type_specifier
-    function_body_block
-    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4, $5) }
-
-  | VIRTUAL DEF
-    identifier_relative
-    parameter_variable_declaration_list
-    decl_attribute_list
-    type_specifier
-    statement_termination
-    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
-
-  | VIRTUAL DEF
-    identifier_relative
-    parameter_variable_declaration_list
-    decl_attribute_list
-    function_body_block
-    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
-
-class_variable_initializers:
-  | BAR /* work around to avoid this rule to be adapted to vector(pass type at random) */
-    class_variable_initializer_list
-    { ClassVariableInitializers($2) }
-
-
-class_variable_initializer_list:
-  | class_variable_initializer_unit % COMMA
-    { }
-
-
-class_variable_initializer_unit:
-  | identifier_relative value_initializer_unit_only_value
-    { VariableDeclarationUnit($1, ADefault, $2) }
-
-
-
-class_variable_declaration_statement:
-  | variable_declaration statement_termination
-    { ClassVariableDeclarationStatement($1) }
-
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-
-extern_statement:
-  | EXTERN extern_function_declaration_statement statement_termination { }
-  | EXTERN extern_class_declaration_statement statement_termination { }
-    
-
-extern_function_declaration_statement:
-  | DEF
-    identifier_relative
-    -template_parameter_variable_declaration_list
-    parameter_variable_declaration_list
-    extern_decl_attribute_list
-    type_specifier
-    string_literal_sequence
-    { ExternFunctionDeclarationStatement($2, $1, $3, $4, $5, $6) }
-
-extern_class_declaration_statement:
-  | CLASS
-    identifier_relative
-    -template_parameter_variable_declaration_list
-    extern_decl_attribute_list
-    string_literal_sequence
-    { ExternClassDeclarationStatement($2, $1, $3, $4) }
-
-extern_decl_attribute_list:
-  | decl_attribute_list { AExtern :: $1 }
 
 
 /* ==================================================================================================== */
@@ -224,70 +26,14 @@ extern_decl_attribute_list:
 
 
 /* ==================================================================================================== */
+
 /* ==================================================================================================== */
-import_statement:
-  | IMPORT import_decl_unit_list statement_termination
-    { ImportStatement($2) }
 
-import_decl_unit:
-  | normal_identifier_sequence { ImportDeclUnit($1) }
-
-import_decl_unit_list:
-  | (import_decl_unit % COMMA) { $1 }
+/* ==================================================================================================== */
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
-variable_declaration_statement:
-  | variable_declaration statement_termination
-    { VariableDeclarationStatement($1) }
 
-variable_holder_kind_specifier:
-  | VAL { "val" }
-  | REF { "ref" }
-
-variable_declaration:
-  | variable_holder_kind_specifier variable_initializer_unit
-    { VariableDeclaration($1, $2) }
-
-variable_initializer_unit:
-  | identifier_relative decl_attribute_list value_initializer_unit 
-    { VariableDeclarationUnit($1, $2, $3) }
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-control_flow_statement:
-  | while_statement { $1 }
-  | if_statement { $1 }
-
-while_statement:
-  | WHILE LPAREN expression RPAREN program_body_statement
-    { WhileStatement($1, $2) }
-
-if_statement:
-  | IF LPAREN expression RPAREN program_body_statement
-    { IfStatement($1, $2, $3) }
-  | IF LPAREN expression RPAREN program_body_statement ELSE program_body_statement
-    { IfStatement($1, $2, $3) }
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-empty_statement:
-  | statement_termination { EmptyStatement }
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-return_statement:
-  | RETURN expression statement_termination { $1 }
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-expression_statement:
-  | expression statement_termination
-    { $1 }
-
-/* ==================================================================================================== */
-statement_termination:
-  | SEMI { () }
 
 /* ==================================================================================================== */
 /* TODO: make id_expression */
@@ -315,8 +61,17 @@ parameter_variable_declaration_list
 %token OR XOR AND ADD SUB MUL DIV REM LT GT ASSIGN
 %token TRUE FALSE
 %token NOT NEW
-%token COLON COMMA DOT BACKSLASH
+%token DOT COMMA 
+%token LBRACE RBRACE
+%token SEMI
+%token VAL REF
+%token COLON
 %token ONLYMETA META INTRINSIC OVERRIDE
+%token IF ELSE WHILE RETURN
+%token ARROW DEF
+%token EXTERN IMPORT CLASS 
+/*%token   BACKSLASH
+*/
 %token EOF
 %type <string> identifier_sequence
 %start identifier_sequence
@@ -328,6 +83,9 @@ parameter_variable_declaration_list
 %start string_literal_sequence
 %type <Ast.e> expression
 %start expression
+%type <Ast.s> program_body_statement
+%start program_body_statement
+
 %%
 
 /* ==================================================================================================== */
@@ -436,10 +194,6 @@ template_argument_list:
   | NOT primary_expression { [$2] }
 
 /* ==================================================================================================== */
-id_expression:
-  | conditional_expression
-    { $1 }
-
 expression:
   | assign_expression /* NOT commma_expression */ { $1 }
 
@@ -447,10 +201,11 @@ expression_opt:
   | { None }
   | expression { Some $1 }
 
+/*
 comma_expression:
   | assign_expression { $1 }
   | assign_expression COMMA comma_expression { $1 }
-
+*/
 assign_expression:
   | conditional_expression { $1 }
   | conditional_expression ASSIGN conditional_expression { EBin($1, "=", $3) }
@@ -533,10 +288,14 @@ argument_list:
 type_specifier:
   | COLON id_expression { $2 }
 
+id_expression:
+  | conditional_expression { $1 }
+
 type_specifier_opt:
-  | /* empty */    { None }
+  |                { None }
   | type_specifier { Some $1 }
 
+/* ==================================================================================================== */
 decl_attribute:
   | ONLYMETA  { AOnlymeta }
   | META      { AMeta }
@@ -544,18 +303,108 @@ decl_attribute:
   | OVERRIDE  { AOverride }
 
 decl_attribute_list:
-  | decl_attribute                           { [$1] }
-  | decl_attribute COMMA decl_attribute_list { $1 :: $3 }
+  |                          { [] }
+  | decl_attribute_list_impl { $1 }
+
+decl_attribute_list_impl:
+  | decl_attribute                                { [$1] }
+  | decl_attribute COMMA decl_attribute_list_impl { $1 :: $3 }
 
 /* ==================================================================================================== */
-/*
+/* executable scope, such as function, block, lambda, ... */
+program_body_statement:
+  | variable_declaration_statement { $1 }
+  | empty_statement { $1 }
+  | return_statement { $1 }
+  | expression_statement { $1 }
+  | block_statement { SBlock $1 }
+  | control_flow_statement { $1 }
+
+statement_termination:
+  | SEMI { () }
+
+/* ==================================================================================================== */
+variable_declaration_statement:
+  | variable_declaration statement_termination
+    { $1 }
+
+variable_holder_kind_specifier:
+  | VAL { "val" }
+  | REF { "ref" }
+
+variable_declaration:
+  | variable_holder_kind_specifier variable_initializer_unit
+    { SVariableDeclaration($1, $2) }
+
+variable_initializer_unit:
+  | identifier_relative decl_attribute_list value_initializer_unit
+    { ($1, $2, $3) }
+
+/* value initializer unit
+ * Ex.
+ * :int = 5
+ * = 5
+ * :int
+ */
+
+value_initializer_unit:
+  | type_specifier ASSIGN expression { (Some $1, Some $3) }
+  | ASSIGN expression                { (None,    Some $2) }
+  | type_specifier                   { (Some $1, None   ) }
+
+value_initializer_unit_opt:
+  | value_initializer_unit { Some $1 }
+  | { None }
+
+/* ==================================================================================================== */
+empty_statement:
+  | statement_termination { SEmpty }
+
+return_statement:
+  | RETURN expression statement_termination { SReturn $2 }
+
+expression_statement:
+  | expression statement_termination
+    { SExpression $1 }
+
+/* ==================================================================================================== */
+block_statement:
+  | LBRACE program_body_statements RBRACE { $2 }
+
+program_body_statements:
+  | { [] }
+  | program_body_statement program_body_statements { $1::$2 }
+
+/* ==================================================================================================== */
+control_flow_statement:
+  | while_statement { $1 }
+  | if_statement { $1 }
+
+while_statement:
+  | WHILE LPAREN expression RPAREN program_body_statement
+    { SWhile($3, $5) }
+
+if_statement:
+  | IF LPAREN expression RPAREN program_body_statement
+    { SIf($3, $5, SEmpty) }
+  | IF LPAREN expression RPAREN program_body_statement ELSE program_body_statement
+    { SIf($3, $5, $7) }
+
+/* ==================================================================================================== */
+top_level_statement :
+  | function_definition_statement { $1 }
+  | extern_statement { $1 }
+  | empty_statement { TSEmpty }
+  | import_statement { $1 }
+  | expression_statement { TSExpression $1 }
+  | class_definition_statement { $1 }
+/* ==================================================================================================== */
 template_parameter_variable_declaration:
-  | template_parameter_variable_initializer_unit { VariableDeclaration(ARef, $1) }
+  | template_parameter_variable_initializer_unit { $1 }
 
 template_parameter_variable_initializer_unit:
-  | identifier_relative -value_initializer_unit
-    { VariableDeclarationUnit($1, ADefault, $2) (* TODO: decl::onlymeta? *) }
-
+  | identifier_relative value_initializer_unit_opt
+    { ($1, ADefault, $2) }
 
 template_parameter_variable_declaration_list:
   | NOT LPAREN RPAREN  { [] }
@@ -564,11 +413,51 @@ template_parameter_variable_declaration_list:
 template_parameter_variable_declaration_list_impl:
   | template_parameter_variable_declaration { [$1] }
   | template_parameter_variable_declaration COMMA
-    template_parameter_variable_declaration_list_impl { $1 :: $2 }
+    template_parameter_variable_declaration_list_impl { $1 :: $3 }
 
 template_parameter_variable_declaration_list_opt:
   | { None }
   | template_parameter_variable_declaration_list { Some($1) }
+
+/* ==================================================================================================== */
+parameter_variable_holder_kind_specifier:
+  | VAL { "val" }
+  | REF { "ref" }
+  | { "ref" }
+
+parameter_variable_declaration:
+  | parameter_variable_holder_kind_specifier
+    parameter_variable_initializer_unit
+    { ($1, $2) }
+
+parameter_variable_initializer_unit:
+  |                     value_initializer_unit { (None , $1) }
+  | identifier_relative value_initializer_unit { (Some $1, $2) }
+
+parameter_variable_declaration_list:
+  | LPAREN RPAREN { [] }
+  | LPAREN parameter_variable_declaration_list_impl RPAREN { $2 }
+
+parameter_variable_declaration_list_impl:
+  | parameter_variable_declaration { [$1] }
+  | parameter_variable_declaration COMMA parameter_variable_declaration_list_impl { $1::$3 }
+/* ==================================================================================================== */
+
+function_definition_statement:
+  | DEF identifier_relative
+    template_parameter_variable_declaration_list_opt
+    parameter_variable_declaration_list
+    decl_attribute_list
+    type_specifier_opt
+    function_body_block
+    { TSFunctionDefinition($3, $2, $4, $5, $6, $7) }
+
+function_body_block:
+  | LBRACE program_body_statements RBRACE { $2 }
+  | ARROW expression statement_termination { [SExpression $2] }
+
+/* ==================================================================================================== */
+/*
 
 lambda_expression:
   | lambda_introducer
@@ -581,4 +470,145 @@ lambda_expression:
 
 lambda_introducer:
   | BACKSLASH { () }
+
+function_body_statements_list_for_lambda:
+  | LBRACE program_body_statements RBRACE { $2 }
+  | function_online_body_for_lambda { $1 }
+
+function_online_body_for_lambda:
+  | ARROW expression { [SExpression $2] }
+
+*/
+
+/* ==================================================================================================== */
+extern_statement:
+  | EXTERN extern_function_declaration_statement statement_termination { $2 }
+  | EXTERN extern_class_declaration_statement statement_termination { $2 }
+
+extern_function_declaration_statement:
+  | DEF
+    identifier_relative
+    template_parameter_variable_declaration_list_opt
+    parameter_variable_declaration_list
+    extern_decl_attribute_list
+    type_specifier
+    string_literal_sequence
+    { TSExternFunctionDeclaration($3, $2, $4, $5, $6, $7) }
+
+extern_class_declaration_statement:
+  | CLASS
+    identifier_relative
+    template_parameter_variable_declaration_list_opt
+    extern_decl_attribute_list
+    string_literal_sequence
+    { TSExternClassDeclaration($3, $2, $4, $5) }
+
+extern_decl_attribute_list:
+  | decl_attribute_list { AExtern :: $1 }
+
+/* ==================================================================================================== */
+import_statement:
+  | IMPORT import_decl_unit_list statement_termination
+    { TSImport($2) }
+
+import_decl_unit:
+  | normal_identifier_sequence { $1 }
+
+import_decl_unit_list:
+  | import_decl_unit { [$1] }
+  | import_decl_unit COMMA import_decl_unit_list { $1 :: $3 }
+
+/* ==================================================================================================== */
+class_definition_statement:
+  | CLASS
+    identifier_relative
+    template_parameter_variable_declaration_list_opt
+    base_class_type_opt
+    mixin_traits_list_opt
+    decl_attribute_list
+    class_body_block
+    { TSClassDefinition($3, $2, $4, $5, $6, $7) (* ) *) }
+
+base_class_type_opt:
+  | { None }
+  | LT id_expression { Some $2 }
+
+mixin_traits_list_opt:
+  | { [] }
+  | LBRACKET mixin_traits_list RBRACKET { $2 }
+
+mixin_traits_list:
+  | id_expression { [$1] }
+  | id_expression COMMA mixin_traits_list { $1 :: $3 }
+
+class_body_block:
+  | LBRACE RBRACE { [] }
+  | LBRACE class_body_statements RBRACE { $2 }
+
+
+/* ==================================================================================================== */
+
+class_body_statement:
+  | empty_statement { CEmpty }
+  | class_function_definition_statement { $1 }
+/*
+  | class_virtual_function_definition_statement { $1 }
+  | class_variable_declaration_statement { $1 }*/
+
+class_body_statements:
+  | class_body_statement { [$1] }
+  | class_body_statement class_body_statements { $1 :: $2 }
+
+
+class_function_definition_statement:
+  | DEF
+    identifier_relative
+    template_parameter_variable_declaration_list_opt
+    parameter_variable_declaration_list
+    decl_attribute_list
+    class_variable_initializers
+    type_specifier_opt
+    function_body_block
+    { CFunctionDefinition($3, $2, $4) (*,  $5, $6, $7, $8) *) }
+/*
+class_virtual_function_definition_statement:
+  | VIRTUAL DEF
+    identifier_relative
+    parameter_variable_declaration_list
+    decl_attribute_list
+    type_specifier
+    function_body_block
+    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4, $5) }
+
+  | VIRTUAL DEF
+    identifier_relative
+    parameter_variable_declaration_list
+    decl_attribute_list
+    type_specifier
+    statement_termination
+    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
+
+  | VIRTUAL DEF
+    identifier_relative
+    parameter_variable_declaration_list
+    decl_attribute_list
+    function_body_block
+    { ClassVirtualFunctionDefinitionStatement($1, $2, $3, $4) }
+*/
+class_variable_initializers:
+  | OR class_variable_initializer_list { $2 }
+
+class_variable_initializer_list:
+  | class_variable_initializer_unit { [$1] }
+  | class_variable_initializer_unit COMMA class_variable_initializer_list { $1 :: $3 }
+
+class_variable_initializer_unit:
+  | identifier_relative ASSIGN expression
+    { ($1, $3) }
+
+/*
+
+class_variable_declaration_statement:
+  | variable_declaration statement_termination
+    { ClassVariableDeclarationStatement($1) }
 */

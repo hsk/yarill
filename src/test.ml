@@ -71,6 +71,26 @@ let test_expression expected input =
         input Ast.pp_e expected
   end
 
+let test_program_body_statement expected input =
+  begin try
+    let lexbuf = Lexing.from_string input in
+    let result = Parser.program_body_statement Lexer.token lexbuf in
+    if expected <> result
+    then
+      Format.fprintf Format.std_formatter
+        "error input %S expected %a result %a\n"
+        input Ast.pp_s expected Ast.pp_s result;
+  with
+    | Parsing.Parse_error ->
+      Format.fprintf Format.std_formatter
+        "parser error input %S expected %a\n"
+        input Ast.pp_s expected
+    | Failure msg ->
+      Format.fprintf Format.std_formatter
+        "%s input %S expected %a\n" msg
+        input Ast.pp_s expected
+  end
+
 let _ =
   Printf.printf "test_identifier_sequence start\n";
   test_identifier_sequence "a" "a";
@@ -593,3 +613,111 @@ let _ =
     "a % b % c";
 
   Printf.printf "test_expression identifier_value_set end\n";
+
+  Printf.printf "test_program_body_statement start\n";
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [],
+      ((Some (EIdentifier ("int",false))), None))))
+    "val a :int;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("ref",
+      (EIdentifier ("a", false),
+      [],
+      ((Some (EIdentifier ("int",false))), None))))
+    "ref a :int;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [],
+      (None, Some (EInt 1)))))
+    "val a = 1;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [],
+      (Some (EIdentifier ("int",false)), Some (EInt 1)))))
+    "val a:int = 1;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [AOnlymeta],
+      ((Some (EIdentifier ("int",false))), None))))
+    "val a onlymeta :int;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [AMeta],
+      ((Some (EIdentifier ("int",false))), None))))
+    "val a meta :int;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [AIntrinsic],
+      ((Some (EIdentifier ("int",false))), None))))
+    "val a intrinsic :int;";
+
+  test_program_body_statement
+    (SVariableDeclaration ("val",
+      (EIdentifier ("a", false),
+      [AOverride],
+      ((Some (EIdentifier ("int",false))), None))))
+    "val a override :int;";
+
+  test_program_body_statement
+    (SReturn (EInt 10))
+    "return 10;";
+
+  test_program_body_statement
+    SEmpty
+    ";";
+
+  test_program_body_statement
+    (SExpression
+      (EBin (EIdentifier ("a", false), "=", EInt 10)))
+    "a = 10;";
+
+  test_program_body_statement (SBlock []) "{}";
+
+  test_program_body_statement
+    (SWhile (
+      EBin (EIdentifier ("a", false), "<", EInt 10),
+      SBlock [
+        SExpression (
+          EBin (EIdentifier ("a", false), "=",
+            EBin (EIdentifier ("a", false), "+", (EInt 1))))
+      ]))
+    "while(a < 10) { a = a + 1; }";
+
+  test_program_body_statement
+    (SIf (
+      EBin (EIdentifier ("a", false), "<", EInt 10),
+      SBlock [],
+      SEmpty))
+    "if(a < 10) {}";
+
+  test_program_body_statement
+    (SIf (
+      EBin (EIdentifier ("a", false), "<", EInt 10),
+      SBlock [SExpression (ECall (EIdentifier ("b", false), []))],
+      SBlock [SExpression (ECall (EIdentifier ("c", false), []))]))
+    "if(a < 10) {b();} else {c();}";
+
+  test_program_body_statement
+    (SIf (
+      EBin (EIdentifier ("a", false), "<", EInt 10),
+      SBlock [SExpression (ECall (EIdentifier ("b", false), []))],
+      SIf (
+        EIdentifier ("d", false),
+        SExpression (ECall (EIdentifier ("c", false), [])),
+        SEmpty)))
+    "if(a < 10) {b();} else if (d) c();";
+
+  Printf.printf "test_program_body_statement end\n";
