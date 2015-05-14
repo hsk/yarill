@@ -2,53 +2,6 @@
 
 open Ast
 
-(*
-/* code grammar */
-
-program:
-  | module eof { $1 }
-
-module:
-  | top_level_statements { $1 }
-
-top_level_statements:
-  | { [] }
-  | top_level_statement top_level_statements { $1::$2 }
-
-/* ==================================================================================================== */
-
-
-/* ==================================================================================================== */
-
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-
-
-/* ==================================================================================================== */
-
-/* ==================================================================================================== */
-
-/* ==================================================================================================== */
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-
-
-/* ==================================================================================================== */
-/* TODO: make id_expression */
-
-
-/*
-parameter_variable_declaration_list
-    > decl_attribute_list
-    > -type_specifier
-    > function_body_block
-*/
-
-
-*)
-
 %}
 
 %token <string> NORMAL_IDENTFIRE_SEQUENCE
@@ -85,11 +38,11 @@ parameter_variable_declaration_list
 %start expression
 %type <Ast.s> program_body_statement
 %start program_body_statement
+%type <Ast.ts list> program
+%start program
 
 %%
 
-/* ==================================================================================================== */
-/* ==================================================================================================== */
 identifier_sequence:
   | operator_identifier_sequence { $1 }
   | normal_identifier_sequence { $1 }
@@ -559,7 +512,6 @@ class_body_statements:
   | class_body_statement { [$1] }
   | class_body_statement class_body_statements { $1 :: $2 }
 
-
 class_function_definition_statement:
   | DEF
     identifier_relative
@@ -612,3 +564,14 @@ class_variable_declaration_statement:
   | variable_declaration statement_termination
     { ClassVariableDeclarationStatement($1) }
 */
+
+
+/* ==================================================================================================== */
+/* code grammar */
+
+program:
+  | top_level_statement_list EOF { $1 }
+
+top_level_statement_list:
+  | { [] }
+  | top_level_statement top_level_statement_list { $1::$2 }
