@@ -1,3 +1,5 @@
+open Ast
+
 let test_identifier_sequence expected input =
   begin try
     let lexbuf = Lexing.from_string input in
@@ -37,16 +39,36 @@ let test_float_literal expected input =
 
   end
 
-let test_string_literal expected input =
+let test_string_literal_sequence expected input =
   begin try
     let lexbuf = Lexing.from_string input in
-    let result = Parser.string_literal Lexer.token lexbuf in
+    let result = Parser.string_literal_sequence Lexer.token lexbuf in
     if expected <> result
     then
       Printf.printf "error input %S expected %S result %S\n" input expected result;
   with
     | Parsing.Parse_error ->
       Printf.printf "parser error input %S expected %S\n" input expected
+  end
+
+let test_expression expected input =
+  begin try
+    let lexbuf = Lexing.from_string input in
+    let result = Parser.expression Lexer.token lexbuf in
+    if expected <> result
+    then
+      Format.fprintf Format.std_formatter
+        "error input %S expected %a result %a\n"
+        input Ast.pp_e expected Ast.pp_e result;
+  with
+    | Parsing.Parse_error ->
+      Format.fprintf Format.std_formatter
+        "parser error input %S expected %a\n"
+        input Ast.pp_e expected
+    | Failure msg ->
+      Format.fprintf Format.std_formatter
+        "%s input %S expected %a\n" msg
+        input Ast.pp_e expected
   end
 
 let _ =
@@ -138,6 +160,10 @@ let _ =
   test_identifier_sequence "%op_post_>" "op post >";
   test_identifier_sequence "%op_post_=" "op post =";
 
+  Printf.printf "test_identifier_sequence end\n";
+
+
+  Printf.printf "test_integer_literal start\n";
   test_integer_literal 0 "0";
   test_integer_literal 1 "1";
   test_integer_literal 2 "2";
@@ -217,13 +243,12 @@ let _ =
   test_integer_literal (-0b11) "-0b11";
   test_integer_literal (-0b111) "-0b111";
   test_integer_literal (-0b11111111) "-0b1111_1111_";
+  Printf.printf "test_integer_literal end\n";
 
+  Printf.printf "test_float_literal start\n";
   test_float_literal 0.1 "0.100000";
   test_float_literal 9.9 "9.9";
   test_float_literal 1. "1.";
-  test_float_literal 0.1 "0.100000e";
-  test_float_literal 9.9 "9.9e";
-  test_float_literal 1. "1.e";
   test_float_literal 0.1e2 "0.100000e2";
   test_float_literal 9.9e2 "9.9e2";
   test_float_literal 1.e2 "1.e2";
@@ -255,22 +280,90 @@ let _ =
   test_float_literal 0.1e-2 "0.100000E-2l";
   test_float_literal 0.1e-2 "0.100000e-2L";
   test_float_literal 0.1e-2 "0.100000E-2L";
+  Printf.printf "test_float_literal end\n";
 
-  test_string_literal "" "\"\"";
-  test_string_literal "a" "\"a\"";
-  test_string_literal "aa" "\"aa\"";
-  test_string_literal "\"" "\"\\\"\"";
-  test_string_literal "\\" "\"\\\\\"";
-  test_string_literal "\'" "\"\\'\"";
-  test_string_literal "\n" "\"\\n\"";
-  test_string_literal "\r" "\"\\r\"";
-  test_string_literal "\t" "\"\\t\"";
-  test_string_literal "\b" "\"\\b\"";
-  test_string_literal " " "\"\\\ \"";
-  test_string_literal "\000" "\"\\000\"";
-  test_string_literal "\010" "\"\\010\"";
-  test_string_literal "\020" "\"\\020\"";
-  test_string_literal "\x40" "\"\\x40\"";
+  Printf.printf "test_string_literal_sequence start\n";
+  test_string_literal_sequence "" "\"\"";
+  test_string_literal_sequence "a" "\"a\"";
+  test_string_literal_sequence "aa" "\"aa\"";
+  test_string_literal_sequence "\"" "\"\\\"\"";
+  test_string_literal_sequence "\\" "\"\\\\\"";
+  test_string_literal_sequence "\'" "\"\\'\"";
+  test_string_literal_sequence "\n" "\"\\n\"";
+  test_string_literal_sequence "\r" "\"\\r\"";
+  test_string_literal_sequence "\t" "\"\\t\"";
+  test_string_literal_sequence "\b" "\"\\b\"";
+  test_string_literal_sequence " " "\"\\\ \"";
+  test_string_literal_sequence "\000" "\"\\000\"";
+  test_string_literal_sequence "\010" "\"\\010\"";
+  test_string_literal_sequence "\020" "\"\\020\"";
+  test_string_literal_sequence "\x40" "\"\\x40\"";
+  Printf.printf "test_string_literal_sequence end\n";
 
+  Printf.printf "test_expression float start\n";
+  test_expression (EFloat 0.1) "0.100000";
+  test_expression (EFloat 9.9) "9.9";
+  test_expression (EFloat 1.) "1.";
+  test_expression (EFloat 0.1e2) "0.100000e2";
+  test_expression (EFloat 9.9e2) "9.9e2";
+  test_expression (EFloat 1.e2) "1.e2";
+  test_expression (EFloat 0.1e2) "0.100000E2";
+  test_expression (EFloat 9.9e2) "9.9E2";
+  test_expression (EFloat 1.e2) "1.E2";
+  test_expression (EFloat 0.1e2) "0.100000e2f";
+  test_expression (EFloat 0.1e2) "0.100000E2f";
+  test_expression (EFloat 0.1e2) "0.100000e2F";
+  test_expression (EFloat 0.1e2) "0.100000E2F";
+  test_expression (EFloat 0.1e2) "0.100000e2l";
+  test_expression (EFloat 0.1e2) "0.100000E2l";
+  test_expression (EFloat 0.1e2) "0.100000e2L";
+  test_expression (EFloat 0.1e2) "0.100000E2L";
+  test_expression (EFloat 0.1e+2) "0.100000e+2f";
+  test_expression (EFloat 0.1e+2) "0.100000E+2f";
+  test_expression (EFloat 0.1e+2) "0.100000e+2F";
+  test_expression (EFloat 0.1e+2) "0.100000E+2F";
+  test_expression (EFloat 0.1e+2) "0.100000e+2l";
+  test_expression (EFloat 0.1e+2) "0.100000E+2l";
+  test_expression (EFloat 0.1e+2) "0.100000e+2L";
+  test_expression (EFloat 0.1e+2) "0.100000E+2L";
 
-  Printf.printf "test_identifier_sequence end\n";
+  test_expression (EFloat 0.1e-2) "0.100000e-2f";
+  test_expression (EFloat 0.1e-2) "0.100000E-2f";
+  test_expression (EFloat 0.1e-2) "0.100000e-2F";
+  test_expression (EFloat 0.1e-2) "0.100000E-2F";
+  test_expression (EFloat 0.1e-2) "0.100000e-2l";
+  test_expression (EFloat 0.1e-2) "0.100000E-2l";
+  test_expression (EFloat 0.1e-2) "0.100000e-2L";
+  test_expression (EFloat 0.1e-2) "0.100000E-2L";
+  Printf.printf "test_expression float end\n";
+
+  Printf.printf "test_expression string start\n";
+  test_expression (EString "") "\"\"";
+  test_expression (EString "a") "\"a\"";
+  test_expression (EString "aa") "\"aa\"";
+  test_expression (EString "\"") "\"\\\"\"";
+  test_expression (EString "\\") "\"\\\\\"";
+  test_expression (EString "\'") "\"\\'\"";
+  test_expression (EString "\n") "\"\\n\"";
+  test_expression (EString "\r") "\"\\r\"";
+  test_expression (EString "\t") "\"\\t\"";
+  test_expression (EString "\b") "\"\\b\"";
+  test_expression (EString " ") "\"\\\ \"";
+  test_expression (EString "\000") "\"\\000\"";
+  test_expression (EString "\010") "\"\\010\"";
+  test_expression (EString "\020") "\"\\020\"";
+  test_expression (EString "\x40") "\"\\x40\"";
+  Printf.printf "test_expression string end\n";
+
+  Printf.printf "test_expression bool start\n";
+  test_expression (EBool true) "true";
+  test_expression (EBool false) "false";
+  Printf.printf "test_expression bool end\n";
+
+  Printf.printf "test_expression array start\n";
+  test_expression (EArray []) "[]";
+  test_expression (EArray [EBool true]) "[true]";
+  test_expression (EArray [EBool true; EBool false]) "[true, false]";
+  test_expression (EArray [EInt 1; EInt 2; EInt 3]) "[1, 2, 3]";
+  Printf.printf "test_expression array start\n";
+

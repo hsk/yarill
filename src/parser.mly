@@ -1,5 +1,7 @@
 %{
 
+open Ast
+
 (*
 /* code grammar */
 
@@ -97,20 +99,6 @@ value_initializer_unit_only_value:
       { $2 }
 
 /* ==================================================================================================== */
-type_specifier:
-  | COLON id_expression { $2 }
-
-decl_attribute:
-  | ONLYMETA { AOnlymeta }
-  | META { AMeta }
-  | INTRINSIC { AIntrinsic }
-  | OVERRIDE { AOverride }
-
-decl_attribute_list:
-  | decl_attribute[merged_bitflag( $1 )] % COMMA
-  | x3::eps
-
-/* ==================================================================================================== */
 /* ==================================================================================================== */
 class_definition_statement:
   | CLASS
@@ -126,7 +114,7 @@ base_class_type:
   | LT id_expression { $2 }
 
 mixin_traits_list:
-  | LBRACK  (id_expression % COMMA) RBRACK { $2 }
+  | LBRACKET  (id_expression % COMMA) RBRACKET { $2 }
 
 class_body_block:
   | LBRACE class_body_statements RBRACE { $2 }
@@ -234,17 +222,6 @@ extern_decl_attribute_list:
 /* ==================================================================================================== */
 /* ==================================================================================================== */
 
-template_parameter_variable_declaration:
-  | template_parameter_variable_initializer_unit { VariableDeclaration(ARef, $1) }
-
-template_parameter_variable_initializer_unit:
-  | identifier_relative -value_initializer_unit
-    { VariableDeclarationUnit($1, ADefault, $2) (* TODO: decl::onlymeta? *) }
-
-
-template_parameter_variable_declaration_list:
-  | NOT LPAREN RPAREN  { }
-  | NOT LPAREN (template_parameter_variable_declaration % COMMA) RPAREN { }
 
 /* ==================================================================================================== */
 /* ==================================================================================================== */
@@ -314,108 +291,7 @@ statement_termination:
 
 /* ==================================================================================================== */
 /* TODO: make id_expression */
-id_expression:
-  | conditional_expression
-    { $1 }
 
-/* ==================================================================================================== */
-expression:
-  | assign_expression /* NOT commma_expression */ { $1 }
-
-commma_expression:
-  | assign_expression { $1 }
-  | assign_expression COMMA comma_expression { $1 }
-
-assign_expression:
-  | conditional_expression EQ conditional_expression { Bin($1, "=", $3) }
-
-conditional_expression:
-  | logical_or_expression { $1 }
-    /* TODO: add conditional operator( ? : ) */
-
-logical_or_expression:
-  | logical_and_expression { $1 }
-  | logical_and_expression BARBAR logical_and_expression { Bin($1, "||", $2) }
-
-logical_and_expression:
-  | bitwise_or_expression { $1 }
-  | bitwise_or_expression AMPAMP bitwise_or_expression { Bin($1, "&&", $2) }
-
-bitwise_or_expression:
-  | bitwise_xor_expression { $1 }
-  | bitwise_xor_expression BAR bitwise_xor_expression { Bin($1, "|", $2) }
-
-bitwise_xor_expression:
-  | bitwise_and_expression { $1 }
-  | bitwise_and_expression XOR bitwise_and_expression { Bin($1, "^", $2) }
-
-bitwise_and_expression:
-  | equality_expression { $1 }
-  | equality_expression AMP equality_expression { Bin($1, "&", $2) }
-
-equality_expression:
-  | relational_expression { $1 }
-  | relational_expression EQEQ relational_expression { Bin($1, "==", $2) }
-  | relational_expression NE relational_expression { Bin($1, "!=", $2) }
-
-relational_expression:
-  | shift_expression { $1 }
-  | shift_expression LE shift_expression { Bin($1, "<=", $2 ) }
-  | shift_expression LT shift_expression { Bin($1, "<",  $2 ) }
-  | shift_expression GE shift_expression { Bin($1, ">=", $2 ) }
-  | shift_expression GT shift_expression { Bin($1, ">",  $2 ) }
-
-shift_expression:
-  | add_sub_expression { $1 }
-  | add_sub_expression LSHIFT add_sub_expression { Bin($1, "<<", $2) }
-  | add_sub_expression RSHIFT add_sub_expression { Bin($1, ">>", $2) }
-
-add_sub_expression:
-  | mul_div_rem_expression { $1 }
-  | mul_div_rem_expression ADD mul_div_rem_expression { Bin($1, "+", $2) }
-  | unary_expression SUB mul_div_rem_expression { Bin($1, "-", $2) }
-mul_div_rem_expression:
-  | unary_expression { $1 }
-  | unary_expression MUL unary_expression { Bin($1, "*", $2) }
-  | unary_expression DIV unary_expression { Bin($1, "/", $2) }
-  | unary_expression REM unary_expression { Bin($1, "%", $2) }
-
-unary_expression:
-  | postfix_expression { $1 }
-  | SUB unary_expression { Unary("-", $2) }
-  | ADD unary_expression { Unary("+", $2) }
-  | MUL unary_expression { Unary("*", $2) }
-  | AMP unary_expression { Unary("&", $2) }
-  | NEW unary_expression { Unary("new", $2) }
-    
-postfix_expression:
-  | primary_expression { $1 }
-  | primary_expression DOT identifier_value_set { ElementSelectorExpression($1) }
-  | primary_expression LBRACK -expression RBRACK { SubscrptingExpression($1) }
-  | primary_expression argument_list { CallExpression ($1) }
-
-primary_expression:
-  | primary_value { $1 }
-  | LPAREN expression RPAREN { $2 }
-  | lambda_expression { $1 }
-    
-argument_list:
-  | LPAREN RPAREN { [] }
-  | LPAREN (assign_expression % COMMA) RPAREN { $2 }
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-lambda_expression:
-  | lambda_introducer
-    -template_parameter_variable_declaration_list
-    parameter_variable_declaration_list
-    decl_attribute_list
-    -type_specifier
-    function_body_statements_list_for_lambda
-    { LambdaExpression($1, $2, $3, $4, $5) }
-
-lambda_introducer:
-  | BACKBACK { () }
 
 /*
 parameter_variable_declaration_list
@@ -425,75 +301,6 @@ parameter_variable_declaration_list
 */
 
 
-  *)
-(*
-
-/* ==================================================================================================== */
-/* ==================================================================================================== */
-primary_value:
-  | boolean_literal { $1 }
-  | identifier_value_set { $1 }
-  | numeric_literal { $1 }
-  | string_literal { $1 }
-  | array_literal { $1 }
-
-/* ==================================================================================================== */
-identifier_value_set:
-  | template_instance_identifier { $1 }
-  | identifier { $1 }
-
-identifier:
-  | identifier_from_root { $1 }
-  | identifier_relative { $1 }
-
-identifier_relative:
-  | identifier_sequence { IdentifierValue($1, false) }
-
-identifier_from_root:
-  | DOT identifier_sequence { IdentifierValue($1, true) }
-
-template_instance_identifier:
-  | template_instance_identifier_from_root { $1 }
-  | template_instance_identifier_relative { $1 }
-
-template_instance_identifier_relative:
-  | identifier_sequence template_argument_list
-    { TemplateInstanceValue($1, $2, false) }
-
-template_instance_identifier_from_root:
-  | DOT identifier_sequence template_argument_list
-    { TemplateInstanceValue($1, $2, true) }
-
-template_argument_list:
-  | NOT argument_list { }
-  | NOT primary_expression { ExpressionList($2) }
-
-/* ==================================================================================================== */
-numeric_literal:
-  | float_literal { $1 }
-  | integer_literal { $1 }
-
-/* ==================================================================================================== */
-boolean_literal:
-  | TRUE { true }
-  | FALSE { false }
-
-/* ==================================================================================================== */
-array_literal:
-  | LBRACK RBRACK { ArrayValue [] }
-  | LBRACK ( assign_expression % COMMA ) RBRACK { ArrayValue $2 }
-
-/* ==================================================================================================== */
-string_literal:
-  | string_literal_sequence
-    { StringValue($1) }
-
-string_literal_sequence:
-  | STRING_LITERAL_SEQUENCE { $1 }
-    
-
-escape_sequence:
-  | "\\n" { '\n' }
 *)
 
 %}
@@ -501,11 +308,15 @@ escape_sequence:
 %token <string> NORMAL_IDENTFIRE_SEQUENCE
 %token <int> INTEGER_LITERAL
 %token <float> FLOAT_LITERAL
-%token <string> STRING_LITERAL
+%token <string> STRING_LITERAL_SEQUENCE
 %token OP PRE POST
 %token EQ NE LOR LAND LE GE LSHIFT RSHIFT
 %token LPAREN RPAREN LBRACKET RBRACKET
 %token OR XOR AND ADD SUB MUL DIV REM LT GT ASSIGN
+%token TRUE FALSE
+%token NOT NEW
+%token COLON COMMA DOT BACKSLASH
+%token ONLYMETA META INTRINSIC OVERRIDE
 %token EOF
 %type <string> identifier_sequence
 %start identifier_sequence
@@ -513,9 +324,10 @@ escape_sequence:
 %start integer_literal
 %type <float> float_literal
 %start float_literal
-%type <string> string_literal
-%start string_literal
-
+%type <string> string_literal_sequence
+%start string_literal_sequence
+%type <Ast.e> expression
+%start expression
 %%
 
 /* ==================================================================================================== */
@@ -561,5 +373,212 @@ integer_literal:
 float_literal:
   | FLOAT_LITERAL { $1 }
 
+string_literal_sequence:
+  | STRING_LITERAL_SEQUENCE { $1 }
+
+/* ==================================================================================================== */
+primary_value:
+  | boolean_literal { $1 }
+  | array_literal { $1 }
+  | numeric_literal { $1 }
+  | string_literal { $1 }
+  | identifier_value_set { $1 }
+
+boolean_literal:
+  | TRUE { EBool true }
+  | FALSE { EBool false }
+
+numeric_literal:
+  | float_literal { EFloat $1 }
+  | integer_literal { EInt $1 }
+
 string_literal:
-  | STRING_LITERAL { $1 }
+  | string_literal_sequence
+    { EString($1) }
+
+array_literal:
+  | LBRACKET RBRACKET { EArray [] }
+  | LBRACKET assign_expression_list RBRACKET { EArray $2 }
+
+assign_expression_list:
+  | assign_expression { [$1] }
+  | assign_expression COMMA assign_expression_list { $1 :: $3 }
+
+/* ==================================================================================================== */
+identifier_value_set:
+  | template_instance_identifier { $1 }
+  | identifier { $1 }
+
+identifier:
+  | identifier_from_root { $1 }
+  | identifier_relative { $1 }
+
+identifier_relative:
+  | identifier_sequence { EIdentifier($1, false) }
+
+identifier_from_root:
+  | DOT identifier_sequence { EIdentifier($2, true) }
+
+template_instance_identifier:
+  | template_instance_identifier_from_root { $1 }
+  | template_instance_identifier_relative { $1 }
+
+template_instance_identifier_relative:
+  | identifier_sequence template_argument_list
+    { ETemplateInstance($1, $2, false) }
+
+template_instance_identifier_from_root:
+  | DOT identifier_sequence template_argument_list
+    { ETemplateInstance($2, $3, true) }
+
+template_argument_list:
+  | NOT argument_list { $2 }
+  | NOT primary_expression { [$2] }
+
+/* ==================================================================================================== */
+id_expression:
+  | conditional_expression
+    { $1 }
+
+expression:
+  | assign_expression /* NOT commma_expression */ { $1 }
+
+expression_opt:
+  | { None }
+  | expression { Some $1 }
+
+comma_expression:
+  | assign_expression { $1 }
+  | assign_expression COMMA comma_expression { $1 }
+
+assign_expression:
+  | conditional_expression { $1 }
+  | conditional_expression ASSIGN conditional_expression { EBin($1, "=", $3) }
+
+conditional_expression:
+  | logical_or_expression { $1 }
+    /* TODO: add conditional operator( ? : ) */
+
+logical_or_expression:
+  | logical_and_expression { $1 }
+  | logical_and_expression LOR logical_and_expression { EBin($1, "||", $3) }
+
+logical_and_expression:
+  | bitwise_or_expression { $1 }
+  | bitwise_or_expression LAND bitwise_or_expression { EBin($1, "&&", $3) }
+
+bitwise_or_expression:
+  | bitwise_xor_expression { $1 }
+  | bitwise_xor_expression OR bitwise_xor_expression { EBin($1, "|", $3) }
+
+bitwise_xor_expression:
+  | bitwise_and_expression { $1 }
+  | bitwise_and_expression XOR bitwise_and_expression { EBin($1, "^", $3) }
+
+bitwise_and_expression:
+  | equality_expression { $1 }
+  | equality_expression AND equality_expression { EBin($1, "&", $3) }
+
+equality_expression:
+  | relational_expression { $1 }
+  | relational_expression EQ relational_expression { EBin($1, "==", $3) }
+  | relational_expression NE relational_expression { EBin($1, "!=", $3) }
+
+relational_expression:
+  | shift_expression { $1 }
+  | shift_expression LE shift_expression { EBin($1, "<=", $3) }
+  | shift_expression LT shift_expression { EBin($1, "<",  $3) }
+  | shift_expression GE shift_expression { EBin($1, ">=", $3) }
+  | shift_expression GT shift_expression { EBin($1, ">",  $3) }
+
+shift_expression:
+  | add_sub_expression { $1 }
+  | add_sub_expression LSHIFT add_sub_expression { EBin($1, "<<", $3) }
+  | add_sub_expression RSHIFT add_sub_expression { EBin($1, ">>", $3) }
+
+add_sub_expression:
+  | mul_div_rem_expression { $1 }
+  | mul_div_rem_expression ADD mul_div_rem_expression { EBin($1, "+", $3) }
+  | unary_expression SUB mul_div_rem_expression { EBin($1, "-", $3) }
+mul_div_rem_expression:
+  | unary_expression { $1 }
+  | unary_expression MUL unary_expression { EBin($1, "*", $3) }
+  | unary_expression DIV unary_expression { EBin($1, "/", $3) }
+  | unary_expression REM unary_expression { EBin($1, "%", $3) }
+
+unary_expression:
+  | postfix_expression   { $1 }
+  | SUB unary_expression { EUnary("-", $2) }
+  | ADD unary_expression { EUnary("+", $2) }
+  | MUL unary_expression { EUnary("*", $2) }
+  | AND unary_expression { EUnary("&", $2) }
+  | NEW unary_expression { EUnary("new", $2) }
+
+postfix_expression:
+  | primary_expression { $1 }
+  | primary_expression DOT identifier_value_set { EElementSelector($1, $3) }
+  | primary_expression LBRACKET expression_opt RBRACKET { ESubscrpting($1, $3) }
+  | primary_expression argument_list { ECall($1, $2) }
+
+primary_expression:
+  | primary_value            { $1 }
+  | LPAREN expression RPAREN { $2 }
+/*  | lambda_expression        { $1 } */
+
+argument_list:
+  | LPAREN RPAREN                        { [] }
+  | LPAREN assign_expression_list RPAREN { $2 }
+
+/* ==================================================================================================== */
+type_specifier:
+  | COLON id_expression { $2 }
+
+type_specifier_opt:
+  | /* empty */    { None }
+  | type_specifier { Some $1 }
+
+decl_attribute:
+  | ONLYMETA  { AOnlymeta }
+  | META      { AMeta }
+  | INTRINSIC { AIntrinsic }
+  | OVERRIDE  { AOverride }
+
+decl_attribute_list:
+  | decl_attribute                           { [$1] }
+  | decl_attribute COMMA decl_attribute_list { $1 :: $3 }
+
+/* ==================================================================================================== */
+/*
+template_parameter_variable_declaration:
+  | template_parameter_variable_initializer_unit { VariableDeclaration(ARef, $1) }
+
+template_parameter_variable_initializer_unit:
+  | identifier_relative -value_initializer_unit
+    { VariableDeclarationUnit($1, ADefault, $2) (* TODO: decl::onlymeta? *) }
+
+
+template_parameter_variable_declaration_list:
+  | NOT LPAREN RPAREN  { [] }
+  | NOT LPAREN template_parameter_variable_declaration_list_impl RPAREN { $3 }
+
+template_parameter_variable_declaration_list_impl:
+  | template_parameter_variable_declaration { [$1] }
+  | template_parameter_variable_declaration COMMA
+    template_parameter_variable_declaration_list_impl { $1 :: $2 }
+
+template_parameter_variable_declaration_list_opt:
+  | { None }
+  | template_parameter_variable_declaration_list { Some($1) }
+
+lambda_expression:
+  | lambda_introducer
+    template_parameter_variable_declaration_list_opt
+    parameter_variable_declaration_list
+    decl_attribute_list
+    type_specifier_opt
+    function_body_statements_list_for_lambda
+    { ELambda($1, $2, $3, $4, $5) }
+
+lambda_introducer:
+  | BACKSLASH { () }
+*/

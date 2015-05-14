@@ -54,6 +54,13 @@ example/hello.rill
 
 コメントは空白文字としてコンパイラによって扱われます。文字列リテラルの内部で `/*` や `//` があってもコメントにはなりません。
 
+### キーワード Keyword
+
+```
+op pre post true false
+```
+
+
 ### 識別子 Identifier
 
 ```
@@ -118,7 +125,6 @@ float_type ::= 'f' | 'l' | 'F' | 'L'
 ```
 escape_sequence ::= "\\" | '\"' | "\'" | "\n" | "\r" | "\t" | "\b" | "\ " | "\DDD" | "\xHH"
 string_literal_sequence ::= '"' { (escape_sequence | char - '"') } '"'
-string_literal ::= string_literal_sequence
 ```
 
 エスケープシーケンスは以下の通りです:
@@ -137,20 +143,20 @@ string_literal ::= string_literal_sequence
 | \x HH    | 文字HHはASCIIコードの16進数 |
 
 
-## Context-free Syntax
+## 文脈自由文法 context-free syntax
 
-## プライマリ値 Primary value
+## プライマリ値 primary value
 
 ```
 primary_value ::=
     boolean_literal
-  | identifier_value_set
   | numeric_literal
   | string_literal
   | array_literal
+  | identifier_value_set
 ```
 
-### ブーリアンリテラル
+### ブーリアンリテラル boolean literal
 
 ブーリアンリテラルはtrue又はfalseを記述します。
 
@@ -158,7 +164,21 @@ primary_value ::=
 boolean_literal ::= "true" | "false"
 ```
 
-### 配列リテラル
+### 数値リテラル numeric literal
+
+数値を表すリテラルは、浮動小数点リテラルと整数リテラルがあります。
+
+```
+numeric_literal ::= float_literal | integer_literal
+```
+
+### 文字列リテラル string literal
+
+```
+string_literal ::= string_literal_sequence
+```
+
+### 配列リテラル array literal
 
 配列リテラルを使う事で、配列の初期化を行う事が出来ます。
 
@@ -166,12 +186,34 @@ boolean_literal ::= "true" | "false"
 array_literal ::= '[' assign_expression { ',' assign_expression } ']'
 ```
 
-### 数値リテラル
-
-数値を表すリテラルは、浮動小数点リテラルと整数リテラルがあります。
+### 識別子値集合 indentifier value set
 
 ```
-numeric_literal ::= float_literal | integer_literal
+identifier_value_set ::=
+    template_instance_identifier | identifier
+
+identifier ::=
+    identifier_from_root | identifier_relative
+
+identifier_relative ::= identifier_sequence
+
+identifier_from_root ::= '.' identifier_sequence
+
+template_instance_identifier ::=
+    template_instance_identifier_from_root
+  | template_instance_identifier_relative
+
+template_instance_identifier_relative ::=
+    identifier_sequence template_argument_list
+
+template_instance_identifier_from_root ::=
+    '.' identifier_sequence template_argument_list
+
+template_argument_list ::=
+    '!' (argument_list | primary_expression)
+
+argument_list ::=
+    '(' [ assign_expression { ',' assign_expression } ] ')'
 ```
 
 ## 式 expression
@@ -249,8 +291,6 @@ postfix_expression ::= primary_expression
   | primary_expression { '.' identifier_value_set }
   | primary_expression '[' [ expression ] ']'
   | primary_expression argument_list
-
-argument_list ::= | '(' ')' | '(' [ assign_expression { ',' assign_expression } ] ')'
 ```
 
 ### プライマリ式 primary expression
@@ -548,10 +588,8 @@ class_variable_initializers ::=
     '|' /* work around to avoid this rule to be adapted to vector(pass type at random) */
     class_variable_initializer_list
 
-
 class_variable_initializer_list ::=
     class_variable_initializer_unit { ',' class_variable_initializer_unit }
-
 
 class_variable_initializer_unit ::=
     identifier_relative value_initializer_unit_only_value

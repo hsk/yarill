@@ -4,7 +4,10 @@ OCamlGeneratedFiles(parser.ml lexer.ml)
 USE_OCAMLFIND = true
 OCAML_OTHER_LIBS = unix
 
+OCAMLPACKS[] = ppx_deriving.show
+
 FILES[] =
+  ast
   parser
   lexer
 

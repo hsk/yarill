@@ -33,6 +33,10 @@ rule token = parse
     { PRE }
 | "post"
     { POST }
+| "true"
+    { TRUE }
+| "false"
+    { FALSE }
 | digit_charset+ '.' digit_charset* exponent_part? float_type? as f { FLOAT_LITERAL(float_of_string f) }
 | '.' digit_charset+ as f { FLOAT_LITERAL(float_of_string f) }
 | digit_charset+ exponent_part float_type? as f { FLOAT_LITERAL(float_of_string f) }
@@ -89,6 +93,8 @@ rule token = parse
     { GT }
 | '='
     { ASSIGN }
+| ','
+    { COMMA }
 | nondigit_charset (nondigit_charset | digit_charset)* as s
     { NORMAL_IDENTFIRE_SEQUENCE s }
 
@@ -114,8 +120,8 @@ and strings = parse
 | "\\x" (hex_charset hex_charset as s)
     { buf := !buf ^ (String.make 1 (Char.chr(int_of_string("0x" ^ s)))); strings lexbuf }
 | '"'
-    { STRING_LITERAL !buf }
+    { STRING_LITERAL_SEQUENCE !buf }
 | eof
-    { Format.eprintf "warning: unterminated string@." ; STRING_LITERAL !buf}
+    { Format.eprintf "warning: unterminated string@." ; STRING_LITERAL_SEQUENCE !buf}
 | _
     { buf := !buf ^ (Lexing.lexeme lexbuf); strings lexbuf }

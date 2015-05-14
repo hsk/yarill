@@ -1,13 +1,17 @@
-type t =
-  | Ty of string
-
 type e =
   | EInt of int
+  | EFloat of float
+  | EBool of bool
   | EString of string
-  | EVar of string
-
-type d = 
-  | DFun of string * (string * t) list * t * e list
+  | EIdentifier of string * bool
+  | EArray of e list
+  | EBin of e * string * e
+  | EUnary of string * e
+  | ESubscrpting of e * e option
+  | ECall of e * e list
+  | ETemplateInstance of string * e list * bool
+  | EElementSelector of e * e
+[@@deriving show]
 
 type a =
   | AOnlymeta
@@ -15,3 +19,4 @@ type a =
   | AIntrinsic
   | AOverride
   | ADefault
+[@@deriving show]
