@@ -59,6 +59,15 @@ rule token = parse
     { RETURN }
 | "def"
     { DEF }
+| "extern"
+    { EXTERN }
+| "import"
+    { IMPORT }
+| "class" 
+    { CLASS }
+| "virtual"
+    { VIRTUAL }
+
 | digit_charset+ '.' digit_charset* exponent_part? float_type? as f { FLOAT_LITERAL(float_of_string f) }
 | '.' digit_charset+ as f { FLOAT_LITERAL(float_of_string f) }
 | digit_charset+ exponent_part float_type? as f { FLOAT_LITERAL(float_of_string f) }
@@ -85,6 +94,8 @@ rule token = parse
     { LSHIFT }
 | ">>"
     { RSHIFT }
+| "=>"
+    { ARROW }
 | '('
     { LPAREN }
 | ')'
@@ -129,8 +140,9 @@ rule token = parse
     { COLON }
 | ';'
     { SEMI }
-| "=>"
-    { ARROW }
+| '\\'
+    { BACKSLASH }
+
 | nondigit_charset (nondigit_charset | digit_charset)* as s
     { NORMAL_IDENTFIRE_SEQUENCE s }
 

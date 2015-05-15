@@ -86,3 +86,6 @@ type ts =
     c list
 [@@deriving show]
 
+type program = ts list
+[@@deriving show]
+

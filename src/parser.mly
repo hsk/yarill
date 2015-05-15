@@ -153,11 +153,6 @@ expression_opt:
   | { None }
   | expression { Some $1 }
 
-/*
-comma_expression:
-  | assign_expression { $1 }
-  | assign_expression COMMA comma_expression { $1 }
-*/
 assign_expression:
   | conditional_expression { $1 }
   | conditional_expression ASSIGN conditional_expression { EBin($1, "=", $3) }

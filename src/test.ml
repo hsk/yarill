@@ -91,6 +91,44 @@ let test_program_body_statement expected input =
         input Ast.pp_s expected
   end
 
+let test_program expected input =
+  begin try
+    let lexbuf = Lexing.from_string input in
+    let result = Parser.program Lexer.token lexbuf in
+    if expected <> result
+    then
+      Format.fprintf Format.std_formatter
+        "error input %S expected %a result %a\n"
+        input Ast.pp_program expected Ast.pp_program result;
+  with
+    | Parsing.Parse_error ->
+      Format.fprintf Format.std_formatter
+        "parser error input %S expected %a\n"
+        input Ast.pp_program expected
+    | Failure msg ->
+      Format.fprintf Format.std_formatter
+        "%s input %S expected %a\n" msg
+        input Ast.pp_program expected
+  end
+
+let test_file input =
+  begin try
+    let inp = open_in input in
+    let lexbuf = Lexing.from_channel inp in
+    let _ = Parser.program Lexer.token lexbuf in
+    close_in inp;
+    Format.fprintf Format.std_formatter
+      "file %s ok\n"
+      input;
+  with
+    | Parsing.Parse_error ->
+      Format.fprintf Format.std_formatter
+        "parser error input file %S\n" input
+    | Failure msg ->
+      Format.fprintf Format.std_formatter
+        "%s input file %S\n" msg input
+  end
+
 let _ =
   Printf.printf "test_identifier_sequence start\n";
   test_identifier_sequence "a" "a";
@@ -721,3 +759,93 @@ let _ =
     "if(a < 10) {b();} else if (d) c();";
 
   Printf.printf "test_program_body_statement end\n";
+
+  Printf.printf "test_program start\n";
+
+  test_program [] "";
+  test_program [TSEmpty] ";";
+  test_program [TSEmpty; TSEmpty] ";;";
+  test_program
+    [TSFunctionDefinition (None, EIdentifier ("t", false), [], [], None, [])]
+    "def t(){}";
+
+  test_program
+    [TSFunctionDefinition (
+      None,
+      EIdentifier ("main", false),
+      [], [],
+      (Some (EIdentifier ("int", false))),
+      [(Ast.SReturn (Ast.EInt 0))])
+    ]
+    "def main(): int { return 0; }";
+
+  test_program
+    [(TSImport ["hoge"])]
+    "import hoge;";
+
+  test_program
+    [TSExpression
+       (SExpression
+          (EBin (EInt 1, "+", EInt 2)))]
+    "1+2;";
+
+  test_program
+    [TSClassDefinition (None, EIdentifier ("A", false), None,
+      [], [],
+      [CFunctionDefinition (None, EIdentifier ("ctor", false),
+         [], [], [(EIdentifier ("a", false), (EInt 10))], None,
+         []);
+       (CVariableDeclaration
+          ("val",
+           (EIdentifier ("a", false), [],
+            (Some (EIdentifier ("int", false)), None))))])]
+    "class A { def ctor() | a = 10 {} val a: int; }";
+
+  Printf.printf "test_program end\n";
+
+  Printf.printf "test_file start\n";
+  test_file "../test/integration/test1.rill";
+
+  test_file "../test/integration/hoge.rill";
+  test_file "../test/integration/test1.rill";
+  test_file "../test/integration/test10.rill";
+  test_file "../test/integration/test11.rill";
+  test_file "../test/integration/test12.rill";
+  test_file "../test/integration/test13.rill";
+  test_file "../test/integration/test13a.rill";
+  test_file "../test/integration/test13b.rill";
+  test_file "../test/integration/test13c.rill";
+  test_file "../test/integration/test13d.rill";
+  test_file "../test/integration/test13e.rill";
+  test_file "../test/integration/test13f.rill";
+  test_file "../test/integration/test14.rill";
+  test_file "../test/integration/test15.rill";
+  test_file "../test/integration/test16.rill";
+  test_file "../test/integration/test17.rill";
+  test_file "../test/integration/test18.rill";
+  test_file "../test/integration/test19.rill";
+  test_file "../test/integration/test1a.rill";
+  test_file "../test/integration/test2.rill";
+  test_file "../test/integration/test20.rill";
+  test_file "../test/integration/test21.rill";
+  test_file "../test/integration/test22.rill";
+  test_file "../test/integration/test23.rill";
+  test_file "../test/integration/test24.rill";
+  test_file "../test/integration/test25.rill";
+  test_file "../test/integration/test25a.rill";
+  test_file "../test/integration/test25b.rill";
+  test_file "../test/integration/test26.rill";
+  test_file "../test/integration/test27.rill";
+  test_file "../test/integration/test27a.rill";
+  test_file "../test/integration/test27b.rill";
+  test_file "../test/integration/test3.rill";
+  test_file "../test/integration/test4.rill";
+  test_file "../test/integration/test5.rill";
+  test_file "../test/integration/test6.rill";
+  test_file "../test/integration/test7.rill";
+  test_file "../test/integration/test8.rill";
+  test_file "../test/integration/test9.rill";
+  test_file "../test/integration/test9a.rill";
+  test_file "../test/integration/a.rill";
+
+  Printf.printf "test_file end\n";
