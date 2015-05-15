@@ -290,7 +290,7 @@ unary_expression ::= postfix_expression
 postfix_expression ::= primary_expression
   | primary_expression { '.' identifier_value_set }
   | primary_expression '[' [ expression ] ']'
-  | primary_expression argument_list
+  | postfix_expression argument_list
 ```
 
 ### プライマリ式 primary expression

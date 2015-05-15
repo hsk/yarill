@@ -1,10 +1,18 @@
 def main(): int
 {
-    val a: mutable(int) = 10;
-    a = 21;
-    val b = 20;
+    val a = HogeHuga!(int, int)();
+    val b: HogeHuga!(int, ptr!(int8)) = HogeHuga!(int, ptr!(int8))();
+    p( b.b );
+    b.f();
 
-    val klass1 = mutable(TestClass)( 42 );
+    return 10;
+}
+
+class HogeHuga!(T: type, U: type)
+{
+    def ctor():int
+    {
+    }
 
 
 }

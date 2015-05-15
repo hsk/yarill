@@ -218,8 +218,8 @@ unary_expression:
 
 postfix_expression:
   | primary_expression { $1 }
-  | primary_expression DOT identifier_value_set { EElementSelector($1, $3) }
-  | primary_expression LBRACKET expression_opt RBRACKET { ESubscrpting($1, $3) }
+  | postfix_expression DOT identifier_value_set { EElementSelector($1, $3) }
+  | postfix_expression LBRACKET expression_opt RBRACKET { ESubscrpting($1, $3) }
   | postfix_expression argument_list { ECall($1, $2) }
 
 primary_expression:
@@ -506,7 +506,7 @@ class_function_definition_statement:
     template_parameter_variable_declaration_list_opt
     parameter_variable_declaration_list
     decl_attribute_list
-    class_variable_initializers
+    class_variable_initializers_opt
     type_specifier_opt
     function_body_block
     { CFunctionDefinition($3, $2, $4, $5, $6, $7, $8) }
@@ -535,7 +535,8 @@ class_virtual_function_definition_statement:
     function_body_block
     { CVirtualFunctionDefinition($3, $4, $5, None, $6) }
 
-class_variable_initializers:
+class_variable_initializers_opt:
+  | { [] }
   | OR class_variable_initializer_list { $2 }
 
 class_variable_initializer_list:
