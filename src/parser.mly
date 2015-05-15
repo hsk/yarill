@@ -220,7 +220,7 @@ postfix_expression:
   | primary_expression { $1 }
   | primary_expression DOT identifier_value_set { EElementSelector($1, $3) }
   | primary_expression LBRACKET expression_opt RBRACKET { ESubscrpting($1, $3) }
-  | primary_expression argument_list { ECall($1, $2) }
+  | postfix_expression argument_list { ECall($1, $2) }
 
 primary_expression:
   | primary_value            { $1 }

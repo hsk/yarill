@@ -650,6 +650,20 @@ let _ =
       EIdentifier ("c", false)))
     "a % b % c";
 
+  test_expression
+    (ECall (EIdentifier ("a", false), []))
+    "a()";
+
+  test_expression
+    (ECall (EIdentifier ("a", false), [EIdentifier ("b", false)]))
+    "a(b)";
+
+  test_expression
+    (ECall (
+      ECall (EIdentifier ("a", false), [EIdentifier ("b", false)]),
+      [EIdentifier ("c", false)]))
+    "a(b)(c)";
+
   Printf.printf "test_expression identifier_value_set end\n";
 
   Printf.printf "test_program_body_statement start\n";
