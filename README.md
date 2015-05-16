@@ -16,6 +16,10 @@ Yarill is yet another rill programming language.
 
     $ make
 
+## run rill parser
+
+    $ ./rillc test/integration/hoge.rill
+
 ## test
 
     $ make test
