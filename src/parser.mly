@@ -93,9 +93,9 @@ string_literal_sequence:
 /* ==================================================================================================== */
 primary_value:
   | boolean_literal { $1 }
-  | array_literal { $1 }
   | numeric_literal { $1 }
   | string_literal { $1 }
+  | array_literal { $1 }
   | identifier_value_set { $1 }
 
 boolean_literal:
@@ -103,8 +103,8 @@ boolean_literal:
   | FALSE { EBool false }
 
 numeric_literal:
-  | float_literal { EFloat $1 }
   | integer_literal { EInt $1 }
+  | float_literal { EFloat $1 }
 
 string_literal:
   | string_literal_sequence
@@ -149,9 +149,13 @@ template_argument_list:
   | NOT argument_list { $2 }
   | NOT primary_expression { [$2] }
 
+argument_list:
+  | LPAREN RPAREN                        { [] }
+  | LPAREN assign_expression_list RPAREN { $2 }
+
 /* ==================================================================================================== */
 expression:
-  | assign_expression /* NOT commma_expression */ { $1 }
+  | assign_expression { $1 }
 
 expression_opt:
   | { None }
@@ -230,10 +234,6 @@ primary_expression:
   | primary_value            { $1 }
   | LPAREN expression RPAREN { $2 }
   | lambda_expression        { $1 }
-
-argument_list:
-  | LPAREN RPAREN                        { [] }
-  | LPAREN assign_expression_list RPAREN { $2 }
 
 /* ==================================================================================================== */
 type_specifier:
@@ -371,15 +371,15 @@ template_parameter_variable_declaration_list_opt:
   | template_parameter_variable_declaration_list { Some($1) }
 
 /* ==================================================================================================== */
-parameter_variable_holder_kind_specifier:
-  | VAL { "val" }
-  | REF { "ref" }
-  | { "ref" }
-
 parameter_variable_declaration:
   | parameter_variable_holder_kind_specifier
     parameter_variable_initializer_unit
     { ($1, $2) }
+
+parameter_variable_holder_kind_specifier:
+  | VAL { "val" }
+  | REF { "ref" }
+  | { "ref" }
 
 parameter_variable_initializer_unit:
   |                     value_initializer_unit { (None , $1) }
@@ -422,9 +422,6 @@ lambda_introducer:
 
 function_body_statements_list_for_lambda:
   | LBRACE program_body_statements RBRACE { $2 }
-  | function_online_body_for_lambda { $1 }
-
-function_online_body_for_lambda:
   | ARROW expression { [SExpression $2] }
 
 /* ==================================================================================================== */
@@ -492,17 +489,15 @@ class_body_block:
   | LBRACE RBRACE { [] }
   | LBRACE class_body_statements RBRACE { $2 }
 
+class_body_statements:
+  | class_body_statement { [$1] }
+  | class_body_statement class_body_statements { $1 :: $2 }
 /* ==================================================================================================== */
-
 class_body_statement:
   | empty_statement { CEmpty }
   | class_function_definition_statement { $1 }
   | class_virtual_function_definition_statement { $1 }
   | class_variable_declaration_statement { $1 }
-
-class_body_statements:
-  | class_body_statement { [$1] }
-  | class_body_statement class_body_statements { $1 :: $2 }
 
 class_function_definition_statement:
   | DEF
@@ -531,13 +526,6 @@ class_virtual_function_definition_statement:
     type_specifier_opt
     statement_termination
     { CVirtualFunctionDefinition($3, $4, $5, $6, []) }
-
-  | VIRTUAL DEF
-    identifier_relative
-    parameter_variable_declaration_list
-    decl_attribute_list
-    function_body_block
-    { CVirtualFunctionDefinition($3, $4, $5, None, $6) }
 
 class_variable_initializers_opt:
   | { [] }

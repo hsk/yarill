@@ -12,7 +12,6 @@ Yarill is yet another rill programming language.
 
 example/hello.rill
 
-
 # grammer
 
 ## はじめに Foreword
@@ -57,9 +56,8 @@ example/hello.rill
 ### キーワード Keyword
 
 ```
-op pre post true false
+op pre post true false val ref onlymeta meta intrinsic override while if else return def extern import class virtual
 ```
-
 
 ### 識別子 Identifier
 
@@ -75,7 +73,9 @@ identifier_sequence ::= operator_identifier_sequence | normal_identifier_sequenc
 
 標準識別子は文字または _ (アンダースコア文字) で始まり、文字、アンダースコア、数字の0個以上のシーケンスです。
 文字はASCIIセットから少なくとも52大文字と小文字が含まれています。
-演算子識別子は `op` を書き、前置演算子を表す `pre` あるいは後置演算子を表す `post` をオプションで、演算子記号(例えば `==`)を記述します。 `pre` または `post` が無い場合は2項演算子を表します。
+演算子識別子は `op` を書き、前置演算子を表す `pre` あるいは後置演算子を表す `post` をオプションで、演算子記号(例えば `==`)を記述します。 `pre` または `post` が無い場合は2項演算子を表します。`op` 単体では、標準識別子として扱える。
+
+TODO: 演算子識別子は字句解析で扱うわけではないので、分離する。
 
 ### 整数リテラル
 
@@ -99,11 +99,17 @@ integer_literal ::=
   | [ '-' ] ("0b" | "0B") ('0' … '1') { '0' … '1' | '_' }
 ```
 
+TODO: この仕様でよいか確認する。
+
 ### 浮動小数点数リテラル
+
+浮動小数点リテラルは浮動小数点数を表します。例えば `1.0` のような文字列です。
+`1.toString()` のようなことを可能にする為に、小数点数を省略出来なくなっています。
+`1.` は浮動小数点数ではない事に注意してください。
 
 ```
 float_literal ::=
-    digit_charset+ '.' { digit_charset } [exponent_part] [float_type]
+    digit_charset+ '.' digit_charset+ [exponent_part] [float_type]
   | '.' digit_charset+ [exponent_part] [float_type]
   | digit_charset+ exponent_part [float_type]
   | digit_charset+ float_type
@@ -142,7 +148,6 @@ string_literal_sequence ::= '"' { (escape_sequence | char - '"') } '"'
 | \DDD     | 文字DDDはASCIIコードの10進数 |
 | \x HH    | 文字HHはASCIIコードの16進数 |
 
-
 ## 文脈自由文法 context-free syntax
 
 ## プライマリ値 primary value
@@ -158,7 +163,7 @@ primary_value ::=
 
 ### ブーリアンリテラル boolean literal
 
-ブーリアンリテラルはtrue又はfalseを記述します。
+ブーリアンリテラルはブール値の真を `true` 、偽を `false` で表します。
 
 ```
 boolean_literal ::= "true" | "false"
@@ -169,10 +174,12 @@ boolean_literal ::= "true" | "false"
 数値を表すリテラルは、浮動小数点リテラルと整数リテラルがあります。
 
 ```
-numeric_literal ::= float_literal | integer_literal
+numeric_literal ::= integer_literal | float_literal
 ```
 
 ### 文字列リテラル string literal
+
+文字列を表すリテラルは文字列シーケンスそのものです。
 
 ```
 string_literal ::= string_literal_sequence
@@ -180,10 +187,10 @@ string_literal ::= string_literal_sequence
 
 ### 配列リテラル array literal
 
-配列リテラルを使う事で、配列の初期化を行う事が出来ます。
+配列リテラルで配列の初期化が出来ます。
 
 ```
-array_literal ::= '[' assign_expression { ',' assign_expression } ']'
+array_literal ::= '[' [ assign_expression { ',' assign_expression }] ']'
 ```
 
 ### 識別子値集合 indentifier value set
@@ -218,7 +225,7 @@ argument_list ::=
 
 ## 式 expression
 
-式(expression)は代入式(assign\_expression)です。comma\_expressionではないので、カンマ区切りで史記を書く事は出来ません。
+式(expression)は代入式(assign\_expression)です。C言語のようなカンマ区切の式は書けません。
 
 ```
 expression ::= assign_expression
@@ -229,10 +236,6 @@ expression ::= assign_expression
 二項演算子は "," "=" "||" "&&" "|" "^" "&" "==" "!=" "<=" "<" ">=" ">" "<<" ">>" "+" "-" "*" "/" "%" があります。
 
 ```
-comma_expression ::=
-    assign_expression
-  | assign_expression { ',' comma_expression }
-
 assign_expression ::= conditional_expression { '=' conditional_expression }
 
 conditional_expression ::= logical_or_expression
@@ -257,19 +260,18 @@ mul_div_rem_expression ::= unary_expression { ('*' | '/' | '%') unary_expression
 
 | 優先順位 | 演算子 | 結合性 |
 | ------ | ----- | ----- |
-| 1 | ","   | 右 |
-| 2 | "="   | 右 |
-| 3 | "||"  | 左 |
-| 4 | "&&"  | 左 |
-| 5 | "|"  | 左 |
-| 6 | "^"  | 左 |
-| 7 | "&"  | 左 |
-| 8 | "==" "!=" | 左 |
-| 9 | "<=" "<" ">=" ">" | 左 |
-| 10 | "<<" ">>" | 左 |
-| 11 | "+" | 左 |
-| 12 | "-" | 左 |
-| 13 | "*" "/" "%" | 左 |
+| 1 | "="   | なし |
+| 2 | "||"  | 左 |
+| 3 | "&&"  | 左 |
+| 4 | "|"  | 左 |
+| 5 | "^"  | 左 |
+| 6 | "&"  | 左 |
+| 7 | "==" "!=" | 左 |
+| 8 | "<=" "<" ">=" ">" | 左 |
+| 9 | "<<" ">>" | 左 |
+| 10 | "+" | 左 |
+| 11 | "-" | 左 |
+| 12 | "*" "/" "%" | 左 |
 
 ### 前置演算子式 unary expression
 
@@ -277,7 +279,7 @@ mul_div_rem_expression ::= unary_expression { ('*' | '/' | '%') unary_expression
 
 ```
 unary_expression ::= postfix_expression
-  | { '-' | '+' | '*' | '&' | "new" } unary_expression
+  | ('-' | '+' | '*' | '&' | "new") unary_expression
 ```
 
 ### 後置演算子式 postfix expression
@@ -288,8 +290,8 @@ unary_expression ::= postfix_expression
 
 ```
 postfix_expression ::= primary_expression
-  | primary_expression { '.' identifier_value_set }
-  | primary_expression '[' [ expression ] ']'
+  | postfix_expression '.' identifier_value_set
+  | postfix_expression '[' [ expression ] ']'
   | postfix_expression argument_list
 ```
 
@@ -305,7 +307,8 @@ primary_expression ::= primary_value | '(' expression ')' | lambda_expression
 
 ## 型指定子 type specifier
 
-型の指定は':'の後ろに識別子式を使って行います。id\_expressionはconditional\_expression なので、様々な演算を行う事が可能です。
+型の指定は':'の後ろに識別子式を書きます。
+id\_expressionはconditional\_expression なので、様々な演算を行う事が可能です。
 
 ```
 type_specifier ::= ':' id_expression
@@ -315,20 +318,17 @@ id_expression ::= conditional_expression
 ## 属性宣言 declare attribute
 
 属性宣言 decl\_attribute は "onlymeta" "meta" "intrinsic" "override" のいずれかを指定します。
-属性宣言リストは属性宣言を',' で区切った１つ以上のシーケンスです。
+属性宣言リストは属性宣言を',' で区切ったシーケンスです。
 
 ```
 decl_attribute ::= "onlymeta" | "meta" | "intrinsic" | "override"
-
-decl_attribute_list ::= decl_attribute { ',' decl_attribute }
+decl_attribute_list ::= [ decl_attribute { ',' decl_attribute } ]
 ```
 
-## 文 statements
+## プログラム本体文 program body statement
 
 文鳥言語には文鳥なだけに文が沢山あります。
 よくあるプログラミング言語の文は文鳥言語ではプログラム本体文(program body statement)といいます。
-
-### プログラム本体文 program body statement
 
 ```
 program_body_statement ::=
@@ -338,6 +338,15 @@ program_body_statement ::=
   | expression_statement
   | block_statement
   | control_flow_statement
+
+```
+
+### 分担端末子 statement termination
+
+セミコロンは文の終わりを表します。
+
+```
+statement_termination ::= ';'
 ```
 
 ### 値宣言文 variable declaration statement
@@ -355,6 +364,17 @@ variable_declaration ::= variable_holder_kind_specifier variable_initializer_uni
 variable_initializer_unit ::= identifier_relative decl_attribute_list value_initializer_unit 
 ```
 
+### 値初期化 value initializer unit
+
+ `:int = 5`、`= 5`、 `:int` のような式を値を初期化する為に使います。
+
+```
+value_initializer_unit ::=
+    type_specifier '=' expression
+  | '=' expression
+  | type_specifier
+```
+
 ### empty 文 empty statement
 
 `empty` 文は ';' だけを記述した物で何も行いません。
@@ -368,7 +388,6 @@ empty_statement ::= statement_termination
 `return` 文は関数から値を返します。
 
 ```
-statement_termination ::= ';'
 return_statement ::= "return" expression statement_termination
 ```
 
@@ -418,22 +437,6 @@ if_statement ::=
   | "if" '(' expression ')' program_body_statement "else" program_body_statement
 ```
 
-## テンプレートパラメータ値宣言 template parameter variable declaration
-
-```
-template_parameter_variable_declaration ::=
-    template_parameter_variable_initializer_unit
-
-template_parameter_variable_initializer_unit ::=
-    identifier_relative [ value_initializer_unit ]
-
-template_parameter_variable_declaration_list ::=
-    '!' '(' ')'
-  | '!' '(' template_parameter_variable_declaration
-            { ','  template_parameter_variable_declaration }
-        ')'
-```
-
 ## トップレベル文 top level statement
 
 ```
@@ -448,6 +451,39 @@ top_level_statement ::=
 
 トップレベルではトップレベル文シーケンス中の最後にのみ式の記述が出来ます。
 
+### テンプレートパラメータ値宣言 template parameter variable declaration
+
+```
+template_parameter_variable_declaration ::=
+    template_parameter_variable_initializer_unit
+
+template_parameter_variable_initializer_unit ::=
+    identifier_relative [ value_initializer_unit ]
+
+template_parameter_variable_declaration_list ::=
+    '!' '(' ')'
+  | '!' '(' template_parameter_variable_declaration
+            { ',' template_parameter_variable_declaration }
+        ')'
+```
+
+### パラメータ値宣言 parameter variable declaration
+
+```
+parameter_variable_declaration ::=
+    parameter_variable_holder_kind_specifier
+    parameter_variable_initializer_unit
+
+parameter_variable_holder_kind_specifier ::= [ "val" | "ref" ]
+parameter_variable_initializer_unit ::=
+    value_initializer_unit
+  | identifier_relative value_initializer_unit
+
+parameter_variable_declaration_list ::=
+    '(' ')'
+  | '(' parameter_variable_declaration { ',' parameter_variable_declaration } ')'
+```
+
 ## 関数定義文 function definition statement
 
 ```
@@ -459,19 +495,30 @@ function_definition_statement ::=
     [ type_specifier ]
     function_body_block
 
-function_body_statements_list ::=
+function_body_block ::=
     '{' program_body_statements '}'
-  | function_online_body_for_normal
+  | "=>" expression statement_termination
+
+```
+
+### ラムダ式 lambda expression
+
+ラムダ式は、名前のない関数を定義して用いる事が出来ます。
+
+```
+lambda_expression ::= lambda_introducer
+    [ template_parameter_variable_declaration_list ]
+    parameter_variable_declaration_list
+    decl_attribute_list
+    [ type_specifier ]
+    function_body_statements_list_for_lambda
+
+lambda_introducer ::= '\'
 
 function_body_statements_list_for_lambda ::=
     '{' program_body_statements '}'
-  | function_online_body_for_lambda
+  | "=>" expression
 
-function_online_body_for_normal ::= "=>" expression statement_termination
-
-function_online_body_for_lambda ::= "=>" expression
-
-function_body_block ::= function_body_statements_list
 ```
 
 ### extern文 extern statement
@@ -527,19 +574,17 @@ base_class_type ::= '>' id_expression
 
 mixin_traits_list ::= '[' [ id_expression { ',' id_expression } ] ']'
 
-class_body_block ::= '{' class_body_statements '}'
+class_body_block ::= '{' { class_body_statements } '}'
 ```
 
 #### クラス本体文 class body statement
 
 ```
 class_body_statement ::=
-    class_virtual_function_definition_statement
+    empty_statement
   | class_function_definition_statement
+  | class_virtual_function_definition_statement
   | class_variable_declaration_statement
-  | empty_statement
-
-class_body_statements ::= { class_body_statement }
 
 class_function_definition_statement ::=
     "def"
@@ -556,25 +601,11 @@ class_virtual_function_definition_statement ::=
     identifier_relative
     parameter_variable_declaration_list
     decl_attribute_list
-    type_specifier
-    function_body_block
-
-  | "virtual" "def"
-    identifier_relative
-    parameter_variable_declaration_list
-    decl_attribute_list
-    type_specifier
-    statement_termination
-
-  | "virtual" "def"
-    identifier_relative
-    parameter_variable_declaration_list
-    decl_attribute_list
-    function_body_block
+    [ type_specifier ]
+    (function_body_block | statement_termination)
 
 class_variable_initializers ::=
-    '|' /* work around to avoid this rule to be adapted to vector(pass type at random) */
-    class_variable_initializer_list
+    '|' class_variable_initializer_list
 
 class_variable_initializer_list ::=
     class_variable_initializer_unit { ',' class_variable_initializer_unit }
@@ -586,28 +617,10 @@ class_variable_declaration_statement ::=
     variable_declaration statement_termination
 ```
 
-### ラムダ式 lambda expression
-
-ラムダ式は、名前のない関数を定義して用いる事が出来ます。
-
-```
-lambda_expression ::= lambda_introducer
-    [ template_parameter_variable_declaration_list ]
-    parameter_variable_declaration_list
-    decl_attribute_list
-    [ type_specifier ]
-    function_body_statements_list_for_lambda
-
-lambda_introducer ::= '\'
-```
-
 ## プログラム program
 
 ```
-program ::= module eof
-
-module ::= top_level_statements
-
+program ::= top_level_statements eof
 top_level_statements ::= { top_level_statement }
 ```
 

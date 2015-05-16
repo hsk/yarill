@@ -135,6 +135,9 @@ let _ =
   test_identifier_sequence "a" "// a\na";
   test_identifier_sequence "a" "/* */a";
   test_identifier_sequence "a" "/*\n*/a";
+  test_identifier_sequence "a" "/*/*\n*/a";
+
+  test_identifier_sequence "a" "a";
   test_identifier_sequence "z" "z";
   test_identifier_sequence "A" "A";
   test_identifier_sequence "Z" "Z";
