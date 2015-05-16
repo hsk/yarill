@@ -24,10 +24,6 @@ Yarill is yet another rill programming language.
 
     $ make clean
 
-## hello world
-
-example/hello.rill
-
 # 文法 grammer
 
 ## はじめに Foreword
