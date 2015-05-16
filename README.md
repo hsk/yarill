@@ -67,7 +67,7 @@ op pre post true false
 digit_charset ::= '0' | … | '9'
 nondigit_charset ::= 'A' | … | 'Z' | 'a' | … | 'z' | '_'
 normal_identifier_sequence ::= nondigit_charset { nondigit_charset | digit_charset }
-operator_identifier_sequence ::= "op" ["pre" | "post"] ("==" | "!=" | "||" | "&&" | "<=" | ">=" | "<<" | ">>" | '(' ')' | '[' ']' | "|" | "^" | "&" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=")
+operator_identifier_sequence ::= "op" ["pre" | "post"] ("==" | "!=" | "||" | "&&" | "<=" | ">=" | "<<" | ">>" | '(' ')' | '[' ']' | "|" | "^" | "&" | "+" | "-" | "*" | "/" | "%" | "<" | ">" | "=") | "op"
 identifier_sequence ::= operator_identifier_sequence | normal_identifier_sequence
 ```
 

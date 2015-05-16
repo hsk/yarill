@@ -68,14 +68,14 @@ rule token = parse
 | "virtual"
     { VIRTUAL }
 
-| digit_charset+ '.' digit_charset* exponent_part? float_type? as f { FLOAT_LITERAL(float_of_string f) }
+| digit_charset+ '.' digit_charset+ exponent_part? float_type? as f { FLOAT_LITERAL(float_of_string f) }
 | '.' digit_charset+ as f { FLOAT_LITERAL(float_of_string f) }
 | digit_charset+ exponent_part float_type? as f { FLOAT_LITERAL(float_of_string f) }
 | digit_charset+ float_type as f { FLOAT_LITERAL(float_of_string f) }
-| '-'? digit_charset (digit_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
-| '-'? ("0x" | "0X") hex_charset (hex_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
-| '-'? ("0o" | "0O") oct_charset (oct_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
-| '-'? ("0b" | "0B") bin_charset (bin_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| digit_charset (digit_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| ("0x" | "0X") hex_charset (hex_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| ("0o" | "0O") oct_charset (oct_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
+| ("0b" | "0B") bin_charset (bin_charset | '_')* as i { INTEGER_LITERAL (int_of_string i) }
 | eof
     { EOF }
 | "=="

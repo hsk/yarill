@@ -50,32 +50,36 @@ normal_identifier_sequence:
   | NORMAL_IDENTFIRE_SEQUENCE { $1 }
 
 operator_identifier_sequence:
-  | OP op_assoc EQ { "%op_" ^ $2 ^ "==" }
-  | OP op_assoc NE { "%op_" ^ $2 ^ "!=" }
-  | OP op_assoc LOR { "%op_" ^ $2 ^ "||" }
-  | OP op_assoc LAND { "%op_" ^ $2 ^ "&&" }
-  | OP op_assoc LE { "%op_" ^ $2 ^ "<=" }
-  | OP op_assoc GE { "%op_" ^ $2 ^ ">=" }
-  | OP op_assoc LSHIFT { "%op_" ^ $2 ^ "<<" }
-  | OP op_assoc RSHIFT { "%op_" ^ $2 ^ ">>" }
-  | OP op_assoc LPAREN RPAREN { "%op_" ^ $2 ^ "()" }
-  | OP op_assoc LBRACKET RBRACKET { "%op_" ^ $2 ^ "[]" }
-  | OP op_assoc OR { "%op_" ^ $2 ^ "|" }
-  | OP op_assoc XOR { "%op_" ^ $2 ^ "^" }
-  | OP op_assoc AND { "%op_" ^ $2 ^ "&" }
-  | OP op_assoc ADD { "%op_" ^ $2 ^ "+" }
-  | OP op_assoc SUB { "%op_" ^ $2 ^ "-" }
-  | OP op_assoc MUL { "%op_" ^ $2 ^ "*" }
-  | OP op_assoc DIV { "%op_" ^ $2 ^ "/" }
-  | OP op_assoc REM { "%op_" ^ $2 ^ "%" }
-  | OP op_assoc LT { "%op_" ^ $2 ^ "<" }
-  | OP op_assoc GT { "%op_" ^ $2 ^ ">" }
-  | OP op_assoc ASSIGN { "%op_" ^ $2 ^ "=" }
-
+  | OP operators { $2 }
 op_assoc:
   | PRE { "pre_" }
   | POST { "post_" }
   | { "" }
+
+operators:
+  | { "op" }
+  | op_assoc EQ { "%op_" ^ $1 ^ "==" }
+  | op_assoc NE { "%op_" ^ $1 ^ "!=" }
+  | op_assoc LOR { "%op_" ^ $1 ^ "||" }
+  | op_assoc LAND { "%op_" ^ $1 ^ "&&" }
+  | op_assoc LE { "%op_" ^ $1 ^ "<=" }
+  | op_assoc GE { "%op_" ^ $1 ^ ">=" }
+  | op_assoc LSHIFT { "%op_" ^ $1 ^ "<<" }
+  | op_assoc RSHIFT { "%op_" ^ $1 ^ ">>" }
+  | op_assoc LPAREN RPAREN { "%op_" ^ $1 ^ "()" }
+  | op_assoc LBRACKET RBRACKET { "%op_" ^ $1 ^ "[]" }
+  | op_assoc OR { "%op_" ^ $1 ^ "|" }
+  | op_assoc XOR { "%op_" ^ $1 ^ "^" }
+  | op_assoc AND { "%op_" ^ $1 ^ "&" }
+  | op_assoc ADD { "%op_" ^ $1 ^ "+" }
+  | op_assoc SUB { "%op_" ^ $1 ^ "-" }
+  | op_assoc MUL { "%op_" ^ $1 ^ "*" }
+  | op_assoc DIV { "%op_" ^ $1 ^ "/" }
+  | op_assoc REM { "%op_" ^ $1 ^ "%" }
+  | op_assoc LT { "%op_" ^ $1 ^ "<" }
+  | op_assoc GT { "%op_" ^ $1 ^ ">" }
+  | op_assoc ASSIGN { "%op_" ^ $1 ^ "=" }
+
 
 integer_literal:
   | INTEGER_LITERAL { $1 }
@@ -225,7 +229,7 @@ postfix_expression:
 primary_expression:
   | primary_value            { $1 }
   | LPAREN expression RPAREN { $2 }
-/*  | lambda_expression        { $1 } */
+  | lambda_expression        { $1 }
 
 argument_list:
   | LPAREN RPAREN                        { [] }
@@ -470,7 +474,7 @@ class_definition_statement:
     mixin_traits_list_opt
     decl_attribute_list
     class_body_block
-    { TSClassDefinition($3, $2, $4, $5, $6, $7) (* ) *) }
+    { TSClassDefinition($3, $2, $4, $5, $6, $7) }
 
 base_class_type_opt:
   | { None }

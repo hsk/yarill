@@ -131,7 +131,10 @@ let test_file input =
 
 let _ =
   Printf.printf "test_identifier_sequence start\n";
-  test_identifier_sequence "a" "a";
+  test_identifier_sequence "a" "// \na";
+  test_identifier_sequence "a" "// a\na";
+  test_identifier_sequence "a" "/* */a";
+  test_identifier_sequence "a" "/*\n*/a";
   test_identifier_sequence "z" "z";
   test_identifier_sequence "A" "A";
   test_identifier_sequence "Z" "Z";
@@ -236,14 +239,6 @@ let _ =
   test_integer_literal 99 "99";
   test_integer_literal 100 "100";
   test_integer_literal 9999 "9999";
-  test_integer_literal (-0) "-0";
-  test_integer_literal (-1) "-1";
-  test_integer_literal (-19) "-19";
-  test_integer_literal (-222) "-222";
-  test_integer_literal (-3333) "-3333";
-  test_integer_literal (-55555) "-55555";
-  test_integer_literal (-55555) "-55_555";
-  test_integer_literal (-55555) "-55_5__5_5_";
   test_integer_literal 0 "0x0";
   test_integer_literal 1 "0x1";
   test_integer_literal 2 "0x2";
@@ -269,11 +264,6 @@ let _ =
   test_integer_literal 0xff "0xff";
   test_integer_literal 0x0 "0X0";
   test_integer_literal 0xff "0XFF";
-  test_integer_literal (-1) "-0x1";
-  test_integer_literal (-0xff) "-0xFF";
-  test_integer_literal (-1) "-0X1";
-  test_integer_literal (-0xff) "-0XFF";
-  test_integer_literal (-0xff) "-0XF_F_";
 
   test_integer_literal 0 "0o0";
   test_integer_literal 1 "0o1";
@@ -286,33 +276,20 @@ let _ =
   test_integer_literal 0o77 "0o77";
   test_integer_literal 0 "0O0";
   test_integer_literal 0o77 "0O77";
-  test_integer_literal (-1) "-0o1";
-  test_integer_literal (-0o77) "-0o77";
-  test_integer_literal (-1) "-0O1";
-  test_integer_literal (-0o77) "-0O77";
-  test_integer_literal (-0o77) "-0O7_7_";
 
   test_integer_literal 0 "0b0";
   test_integer_literal 1 "0b1";
   test_integer_literal 0b10 "0b10";
   test_integer_literal 0b11 "0b11";
-  test_integer_literal (-1) "-0b1";
-  test_integer_literal (-0b10) "-0b10";
-  test_integer_literal (-0b11) "-0b11";
-  test_integer_literal (-0b111) "-0b111";
-  test_integer_literal (-0b11111111) "-0b1111_1111_";
   Printf.printf "test_integer_literal end\n";
 
   Printf.printf "test_float_literal start\n";
   test_float_literal 0.1 "0.100000";
   test_float_literal 9.9 "9.9";
-  test_float_literal 1. "1.";
   test_float_literal 0.1e2 "0.100000e2";
   test_float_literal 9.9e2 "9.9e2";
-  test_float_literal 1.e2 "1.e2";
   test_float_literal 0.1e2 "0.100000E2";
   test_float_literal 9.9e2 "9.9E2";
-  test_float_literal 1.e2 "1.E2";
   test_float_literal 0.1e2 "0.100000e2f";
   test_float_literal 0.1e2 "0.100000E2f";
   test_float_literal 0.1e2 "0.100000e2F";
@@ -373,14 +350,14 @@ let _ =
   test_expression (EInt 99) "99";
   test_expression (EInt 100) "100";
   test_expression (EInt 9999) "9999";
-  test_expression (EInt (-0)) "-0";
-  test_expression (EInt (-1)) "-1";
-  test_expression (EInt (-19)) "-19";
-  test_expression (EInt (-222)) "-222";
-  test_expression (EInt (-3333)) "-3333";
-  test_expression (EInt (-55555)) "-55555";
-  test_expression (EInt (-55555)) "-55_555";
-  test_expression (EInt (-55555)) "-55_5__5_5_";
+  test_expression (EUnary ("-", EInt 0)) "-0";
+  test_expression (EUnary ("-", EInt 1)) "-1";
+  test_expression (EUnary ("-", EInt 19)) "-19";
+  test_expression (EUnary ("-", EInt 222)) "-222";
+  test_expression (EUnary ("-", EInt 3333)) "-3333";
+  test_expression (EUnary ("-", EInt 55555)) "-55555";
+  test_expression (EUnary ("-", EInt 55555)) "-55_555";
+  test_expression (EUnary ("-", EInt 55555)) "-55_5__5_5_";
   test_expression (EInt 0) "0x0";
   test_expression (EInt 1) "0x1";
   test_expression (EInt 2) "0x2";
@@ -406,11 +383,11 @@ let _ =
   test_expression (EInt 0xff) "0xff";
   test_expression (EInt 0x0) "0X0";
   test_expression (EInt 0xff) "0XFF";
-  test_expression (EInt (-1)) "-0x1";
-  test_expression (EInt (-0xff)) "-0xFF";
-  test_expression (EInt (-1)) "-0X1";
-  test_expression (EInt (-0xff)) "-0XFF";
-  test_expression (EInt (-0xff)) "-0XF_F_";
+  test_expression (EUnary ("-", EInt 1)) "-0x1";
+  test_expression (EUnary ("-", EInt 0xff)) "-0xFF";
+  test_expression (EUnary ("-", EInt 1)) "-0X1";
+  test_expression (EUnary ("-", EInt 0xff)) "-0XFF";
+  test_expression (EUnary ("-", EInt 0xff)) "-0XF_F_";
 
   test_expression (EInt 0) "0o0";
   test_expression (EInt 1) "0o1";
@@ -423,33 +400,30 @@ let _ =
   test_expression (EInt 0o77) "0o77";
   test_expression (EInt 0) "0O0";
   test_expression (EInt 0o77) "0O77";
-  test_expression (EInt (-1)) "-0o1";
-  test_expression (EInt (-0o77)) "-0o77";
-  test_expression (EInt (-1)) "-0O1";
-  test_expression (EInt (-0o77)) "-0O77";
-  test_expression (EInt (-0o77)) "-0O7_7_";
+  test_expression (EUnary ("-", EInt 1)) "-0o1";
+  test_expression (EUnary ("-", EInt 0o77)) "-0o77";
+  test_expression (EUnary ("-", EInt 1)) "-0O1";
+  test_expression (EUnary ("-", EInt 0o77)) "-0O77";
+  test_expression (EUnary ("-", EInt 0o77)) "-0O7_7_";
 
   test_expression (EInt 0) "0b0";
   test_expression (EInt 1) "0b1";
   test_expression (EInt 0b10) "0b10";
   test_expression (EInt 0b11) "0b11";
-  test_expression (EInt (-1)) "-0b1";
-  test_expression (EInt (-0b10)) "-0b10";
-  test_expression (EInt (-0b11)) "-0b11";
-  test_expression (EInt (-0b111)) "-0b111";
-  test_expression (EInt (-0b11111111)) "-0b1111_1111_";
+  test_expression (EUnary ("-", EInt 1)) "-0b1";
+  test_expression (EUnary ("-", EInt 0b10)) "-0b10";
+  test_expression (EUnary ("-", EInt 0b11)) "-0b11";
+  test_expression (EUnary ("-", EInt 0b111)) "-0b111";
+  test_expression (EUnary ("-", EInt 0b11111111)) "-0b1111_1111_";
   Printf.printf "test_expression integer end\n";
 
   Printf.printf "test_expression float start\n";
   test_expression (EFloat 0.1) "0.100000";
   test_expression (EFloat 9.9) "9.9";
-  test_expression (EFloat 1.) "1.";
   test_expression (EFloat 0.1e2) "0.100000e2";
   test_expression (EFloat 9.9e2) "9.9e2";
-  test_expression (EFloat 1.e2) "1.e2";
   test_expression (EFloat 0.1e2) "0.100000E2";
   test_expression (EFloat 9.9e2) "9.9E2";
-  test_expression (EFloat 1.e2) "1.E2";
   test_expression (EFloat 0.1e2) "0.100000e2f";
   test_expression (EFloat 0.1e2) "0.100000E2f";
   test_expression (EFloat 0.1e2) "0.100000e2F";
@@ -815,10 +789,20 @@ let _ =
             (Some (EIdentifier ("int", false)), None))))])]
     "class A { def ctor() | a = 10 {} val a: int; }";
 
+  test_program
+    [TSClassDefinition (None, EIdentifier ("I", false), None,
+            [], [],
+            [CFunctionDefinition (None, EIdentifier ("%op_+", false),
+               [("ref",
+                 (Some (EIdentifier ("v", false)),
+                  (Some (EIdentifier ("int", false)), None)))], [
+               ], [], Some (EIdentifier ("int", false)), [])])]
+    "class I { def op +( v: int ): int {} }";
+
+
   Printf.printf "test_program end\n";
 
   Printf.printf "test_file start\n";
-  test_file "../test/integration/test1.rill";
 
   test_file "../test/integration/hoge.rill";
   test_file "../test/integration/test1.rill";
