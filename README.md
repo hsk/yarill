@@ -4,15 +4,31 @@ Yarill is yet another rill programming language.
 
 今はまだ開発中です。
 
-## install
+オリジナルのrill言語はこちらです: https://github.com/yutopp/rill
+
+## requipments
+
+* OCaml 4.0.0 or leter
+* OMake
+* ppx_deriving
+
+## build
 
     $ make
+
+## test
+
+    $ make test
+
+## clean
+
+    $ make clean
 
 ## hello world
 
 example/hello.rill
 
-# grammer
+# 文法 grammer
 
 ## はじめに Foreword
 
