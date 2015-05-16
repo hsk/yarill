@@ -25,7 +25,7 @@ rule token = parse
     { token lexbuf }
 | "/*" _ * "*/"
     { token lexbuf }
-| "//" [^ '\r' '\n'] ('\r' | '\n')
+| "//" [^ '\r' '\n']* ('\r' | '\n')
     { token lexbuf }
 | "op"
     { OP }
