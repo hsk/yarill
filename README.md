@@ -17,7 +17,7 @@ example/hello.rill
 ## はじめに Foreword
 
 このドキュメントは、Rill言語のリファレンスマニュアルとなる事を目指しています。
-言語構造を示し、正確な構文と意味論を提供したいと考えています。しかし全然、出来上がっていません。
+言語構造を示し、正確な構文を提供します。
 
 ## 表記法 Notations
 
@@ -506,19 +506,16 @@ function_body_block ::=
 ラムダ式は、名前のない関数を定義して用いる事が出来ます。
 
 ```
-lambda_expression ::= lambda_introducer
+lambda_expression ::= '\'
     [ template_parameter_variable_declaration_list ]
     parameter_variable_declaration_list
     decl_attribute_list
     [ type_specifier ]
-    function_body_statements_list_for_lambda
+    lambda_of_function_body_statements_list
 
-lambda_introducer ::= '\'
-
-function_body_statements_list_for_lambda ::=
+lambda_of_function_body_statements_list ::=
     '{' program_body_statements '}'
   | "=>" expression
-
 ```
 
 ### extern文 extern statement

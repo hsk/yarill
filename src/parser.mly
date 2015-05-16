@@ -409,18 +409,15 @@ function_body_block:
 
 /* ==================================================================================================== */
 lambda_expression:
-  | lambda_introducer
+  | BACKSLASH
     template_parameter_variable_declaration_list_opt
     parameter_variable_declaration_list
     decl_attribute_list
     type_specifier_opt
-    function_body_statements_list_for_lambda
+    lambda_of_function_body_statements_list
     { ELambda($2, $3, $4, $5, $6) }
 
-lambda_introducer:
-  | BACKSLASH { () }
-
-function_body_statements_list_for_lambda:
+lambda_of_function_body_statements_list:
   | LBRACE program_body_statements RBRACE { $2 }
   | ARROW expression { [SExpression $2] }
 
